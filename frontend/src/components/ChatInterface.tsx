@@ -15,6 +15,7 @@ interface Message {
   intentData?: IntentData | null;
   txHash?: string;
   explorer?: string;
+  status?: string;
 }
 
 interface IntentData {
@@ -34,7 +35,11 @@ interface IntentData {
   balances?: Array<{ asset: string; amount: string; isNative: boolean }>;
   missing_field?: string;
   txHash?: string;
-  explorer?: string;
+  status?: string;
+  statusSource?: string;
+  safetyScore?: number;
+  stage?: string;
+  needs_confirmation?: boolean;
 }
 
 const ChatInterface: React.FC = () => {
@@ -49,10 +54,29 @@ const ChatInterface: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
+  const [loadingStage, setLoadingStage] = useState(0);
+  const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const loadingStages = [
+    "🧠 Analyzing Intent...",
+    "👤 Resolving Context...",
+    "🛡️ Verifying Safety...",
+    "⛓️ Executing Transaction..."
+  ];
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoading) {
+      setLoadingStage(0);
+      interval = setInterval(() => {
+        setLoadingStage(prev => (prev < 3 ? prev + 1 : prev));
+      }, 800);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -62,7 +86,31 @@ const ChatInterface: React.FC = () => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  const addMessage = useCallback((role: 'user' | 'assistant' | 'system', content: string, intentData?: IntentData | null, txHash?: string, explorer?: string) => {
+  // ── V2.4: LIVE TRANSACTION LIFECYCLE MONITOR ──
+  const { provider } = useWallet();
+  useEffect(() => {
+    const pendingMsgs = messages.filter(m => m.role === 'assistant' && m.status === 'pending' && m.txHash);
+    
+    pendingMsgs.forEach(async (msg) => {
+      if (!msg.txHash || !provider) return;
+      
+      try {
+        console.log(`[LIFECYCLE] Watching transaction: ${msg.txHash}`);
+        const receipt = await provider.waitForTransaction(msg.txHash);
+        
+        if (receipt) {
+          console.log(`[LIFECYCLE] Confirmed! Update status for ${msg.txHash}`);
+          setMessages(prev => prev.map(m => 
+            m.id === msg.id ? { ...m, status: 'success' } : m
+          ));
+        }
+      } catch (err) {
+        console.error(`[LIFECYCLE] Confirmation failed for ${msg.txHash}:`, err);
+      }
+    });
+  }, [messages, provider]);
+
+  const addMessage = useCallback((role: 'user' | 'assistant' | 'system', content: string, intentData?: IntentData | null, txHash?: string, explorer?: string, status?: string) => {
     setMessages(prev => [...prev, {
       id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
       role,
@@ -71,6 +119,7 @@ const ChatInterface: React.FC = () => {
       intentData,
       txHash,
       explorer,
+      status,
     }]);
   }, []);
 
@@ -93,16 +142,19 @@ const ChatInterface: React.FC = () => {
 
       // ── V2: Handle 'done' response — transaction already executed on backend ──
       if (data.next_step === 'done') {
-        addMessage('assistant', data.message, data.data || null, data.txHash, data.explorer);
+        // V2.4: Instant UI Feedback - Message is added as 'pending'
+        addMessage('assistant', data.message, data.data || null, data.txHash, data.explorer, 'pending');
 
         if (data.txHash) {
           setLastTxHash(data.txHash);
         }
-
-        // Show Etherscan link as a separate clickable message
-        if (data.explorer) {
-          addMessage('system', `🔗 View on Etherscan: ${data.explorer}`);
-        }
+        
+        // V2.4: Removing the redundant 'system' message with Etherscan link
+        // as the hash is already in the assistant message and we now update its status live.
+      }
+      // ── V2.3: Handle Ask User with Confirmation Flag ──
+      else if (data.next_step === 'ask_user' && data.data?.needs_confirmation) {
+        addMessage('assistant', data.message, data.data);
       }
       // ── Handle error response ──
       else if (data.next_step === 'error') {
@@ -140,13 +192,15 @@ const ChatInterface: React.FC = () => {
           {messages.map((msg) => (
             <motion.div
               key={msg.id}
-              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              layout
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+              className={`flex w-full mb-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                className={`max-w-[80%] rounded-2xl px-4 py-3 relative overflow-hidden shadow-2xl transition-all duration-500 ${
                   msg.role === 'user'
                     ? 'text-white'
                     : msg.role === 'system'
@@ -159,54 +213,98 @@ const ChatInterface: React.FC = () => {
                       ? 'linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%)'
                       : msg.role === 'system'
                       ? 'rgba(245, 158, 11, 0.15)'
+                      : msg.txHash && msg.status === 'pending'
+                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.1) 100%)'
                       : msg.txHash
-                      ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%)'
+                      ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(16, 185, 129, 0.15) 100%)'
                       : 'rgba(255,255,255,0.06)',
                   border: msg.role === 'system'
                     ? '1px solid rgba(245, 158, 11, 0.3)'
+                    : msg.txHash && msg.status === 'pending'
+                    ? '1px solid rgba(59, 130, 246, 0.3)'
                     : msg.txHash
                     ? '1px solid rgba(34, 197, 94, 0.3)'
                     : '1px solid rgba(255,255,255,0.08)',
                 }}
               >
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                {/* V2.2: Safety Approved Glow Effect */}
+                {msg.intentData?.safetyScore === 100 && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 0.1, 0] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                    className="absolute inset-0 pointer-events-none bg-green-500/20"
+                  />
+                )}
+
+                <p className="text-sm whitespace-pre-wrap leading-relaxed relative z-10">{msg.content}</p>
 
                 {/* V2: Transaction Hash Badge */}
                 {msg.txHash && (
-                  <div className="mt-3 pt-2 border-t border-white/10">
+                  <div className="mt-3 pt-2 border-t border-white/10 relative z-10">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold text-green-400">✅ TX CONFIRMED</span>
+                      {msg.status === 'pending' ? (
+                        <span className="text-[10px] font-bold text-blue-400 flex items-center gap-1.5 uppercase tracking-tight">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                          ⏳ {msg.intentData?.stage === 'mempool' ? 'In Mempool (Broadcasted)' : 'Broadcasting to Sepolia'}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-green-400 uppercase tracking-tight">✅ Confirmed On-Chain</span>
+                      )}
                     </div>
                     <a
                       href={msg.explorer || `https://sepolia.etherscan.io/tx/${msg.txHash}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs font-mono text-green-300 hover:text-green-200 hover:underline break-all"
+                      className="text-[10px] font-mono text-blue-300 hover:text-blue-200 hover:underline break-all"
                     >
                       {msg.txHash}
                     </a>
                   </div>
                 )}
 
-                {/* Confidence Score */}
-                {msg.intentData?.confidence && msg.intentData.confidence > 0 && msg.role === 'assistant' && (
-                  <div className="mt-2 pt-2 border-t border-white/10 flex items-center gap-2">
-                    <span className="text-xs text-gray-500">AI Confidence:</span>
-                    <span className={`text-xs font-bold ${
-                      msg.intentData.confidence >= 0.9 ? 'text-green-400' :
-                      msg.intentData.confidence >= 0.7 ? 'text-yellow-400' : 'text-red-400'
-                    }`}>
-                      {Math.round(msg.intentData.confidence * 100)}%
-                    </span>
+                {/* V2.2: Intelligence Badges */}
+                {msg.intentData && msg.role === 'assistant' && (
+                  <div className="flex flex-wrap gap-2 mt-3 relative z-10">
+                    {msg.intentData.statusSource && (
+                      <span className="px-1.5 py-0.5 rounded-md bg-blue-500/10 text-[9px] font-black text-blue-400 border border-blue-500/20 uppercase tracking-widest">
+                        {msg.intentData.statusSource}
+                      </span>
+                    )}
+                    {msg.intentData.safetyScore !== undefined && (
+                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-widest ${
+                        msg.intentData.safetyScore >= 90 ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                      }`}>
+                        🛡️ Safety: {msg.intentData.safetyScore}%
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* V2.3: Confirmation Buttons (Visual Only) */}
+                {msg.intentData?.needs_confirmation && msg.role === 'assistant' && (
+                  <div className="mt-4 flex gap-2 relative z-10">
+                    <button 
+                      onClick={() => setInput('Yes')}
+                      className="px-3 py-1.5 rounded-md bg-green-500/20 text-[10px] font-bold text-green-400 border border-green-500/30 hover:bg-green-500/30 transition-all uppercase"
+                    >
+                      Confirm
+                    </button>
+                    <button 
+                      onClick={() => setInput('No')}
+                      className="px-3 py-1.5 rounded-md bg-red-500/20 text-[10px] font-bold text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all uppercase"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 )}
 
                 {/* Balance Display */}
                 {msg.intentData?.balances && msg.intentData.balances.length > 0 && (
-                  <div className="mt-3 space-y-1">
+                  <div className="mt-4 space-y-1.5 relative z-10">
                     {msg.intentData.balances.map((b, i) => (
-                      <div key={i} className="flex items-center justify-between py-1 px-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                        <span className="text-xs font-semibold text-purple-300">{b.asset}</span>
+                      <div key={i} className="flex items-center justify-between py-1.5 px-3 rounded-lg border border-white/5" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                        <span className="text-xs font-bold text-purple-300">{b.asset}</span>
                         <span className="text-xs font-mono text-white">{b.amount}</span>
                       </div>
                     ))}
@@ -224,14 +322,16 @@ const ChatInterface: React.FC = () => {
             animate={{ opacity: 1 }}
             className="flex justify-start"
           >
-            <div className="rounded-2xl px-5 py-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
-              <div className="flex items-center gap-2">
+            <div className="rounded-2xl px-5 py-3" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-3">
                 <div className="flex gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" style={{ animationDelay: '200ms' }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" style={{ animationDelay: '400ms' }} />
                 </div>
-                <span className="text-xs text-gray-500 ml-2">Processing...</span>
+                <span className="text-[11px] font-medium text-purple-300 tracking-tight transition-all duration-300">
+                  {loadingStages[loadingStage]}
+                </span>
               </div>
             </div>
           </motion.div>

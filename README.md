@@ -1,4 +1,4 @@
-# 🤖 Aura V2 — AI-Powered Autonomous Web3 Agent
+# 🤖 Aura V2.1 — Research-Grade Autonomous Web3 Prototype
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?logo=next.js)
@@ -16,11 +16,12 @@ You just type naturally. Aura understands your intent, requests missing details,
 
 ## ✨ Key Features
 
-- 🧠 **Conversational Intelligence:** Powered by Google's Gemini 2.0 Flash to intelligently parse natural language into structured JSON blockchain intents.
-- 🔁 **Multi-Turn "Gap Filling":** If you say "Send ETH", Aura will remember the context and ask "How much?" and "To whom?" until the transaction parameters are fully satisfied.
-- 🤖 **Autonomous Execution:** Transactions are signed and broadcast *server-side* using the bot's private burner wallet. Zero client-side MetaMask interaction is needed for execution.
-- 💰 **Real-Time Portfolio Tracking:** Securely connects to the user's frontend wallet strictly to fetch and display live balances and tokens.
-- 🛡️ **Risk Mitigation:** Real-time AI risk flagging for zero-value transactions, large volume draining, or unrecognized addresses.
+- 🧠 **Context Intelligence Layer:** Aura converts human-native names (e.g., "John") and fiat-native values (e.g., "$10 worth") into precise blockchain parameters via a local persistent identity store and **CoinGecko** price feeds.
+- 🔄 **Transaction Context Recall:** Remembers your history. "Send the same as last time" autonomously pre-fills recipients and amounts from the audit log.
+- 📇 **Persistent Contact Book:** Zero-Setup local database managing custom name-to-address mappings for a friction-less experience.
+- 🤖 **Fast-Broadcast Autonomy:** Refactored execution model broadcasts transactions in **<2 seconds**, providing instant "Pending" UI feedback while confirming in the background.
+- 🛡️ **Decision Engine & Safety Guard:** A deterministic multi-factor controller that enforces `min(0.1 ETH, 80% balance)` safety thresholds and protects gas reserves.
+- 📜 **Verifiable Execution Model:** Maps natural language intent directly to on-chain `txHash` in a persistent audit trail.
 
 ## 🏗️ Version 2 Architecture Transition
 
@@ -41,11 +42,13 @@ In **V2 (Autonomous Agent)**, the architecture shifts execution logic to the bac
 - **Styling:** Tailwind CSS V4, Framer Motion
 - **Web3 Integration:** `ethers.js` (BrowserProvider) 
 
-### Backend (Agent Brain & Execution)
+### Backend (Agent Brain & Context)
 - **Server:** Node.js, Express.js
-- **AI Brain:** `@google/generative-ai` (Gemini SDK)
-- **Validation:** `zod`
-- **Web3 Engine:** `ethers.js` (JsonRpcProvider & Wallet interactions)
+- **Intelligence:** `@google/generative-ai` (Gemini SDK)
+- **Data Layer:** Lightweight Edge-Persistence (JSON-based audit & contact store)
+- **Pricing:** **CoinGecko API** for real-time USD conversion
+- **Web3 Engine:** `ethers.js` (V6) for server-side signing and broadcast
+- **Validation:** `zod` for strict intent schema enforcement
 
 ---
 
@@ -96,11 +99,19 @@ Visit `http://localhost:3000` to interact with Aura!
 
 ---
 
-## ⚠️ Disclaimer & Academic Notice
+## ⚠️ Technical Limitations & Academic Notice
 
-**THIS IS RESEARCH/ACADEMIC SOFTWARE.** The Autonomous Agent (V2) relies on a "Burner Wallet" pattern where the private key is held in plain text on the backend server. 
-- Use ONLY Testnet (Sepolia) assets. 
-- Do NOT fund the `BOT_PRIVATE_KEY` with Mainnet Ethereum.
-- This codebase was developed as part of a Final Year Project for Rathinam College of Arts and Science | Bharathiar University.
+**IMPORTANT:** This system is a **Research-Grade Autonomous Prototype** developed as part of a Final Year Project for Rathinam College of Arts and Science | Bharathiar University. 
+
+### Core Limitations
+- **Burner Wallet Risk:** The system uses a "Burner Wallet" pattern. The private key resides on the backend server. **Do NOT use with significant real assets.**
+- **Centralized Dependencies:** Real-time information relies on external APIs (Gemini, CoinGecko, Alchemy). Failure of these services will degrade system functionality.
+- **Single-User Architecture:** This prototype currently lacks a robust multi-user authentication layer.
+- **Asynchronous Confirmation:** Transaction confirmation is handled asynchronously; real-time block-status polling is out of scope for this version.
+
+### Future Work
+- Implementation of MPC (Multi-Party Computation) for secure key management.
+- Integration of local Lightweight LLMs to remove external API dependency.
+- On-chain intent verification via smart contract event logs.
 
 <p align="center">Made with ❤️ for the Web3 Ecosystem</p>

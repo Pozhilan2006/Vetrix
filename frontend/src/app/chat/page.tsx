@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useWallet } from '../../context/WalletContext';
 import ChatInterface from '../../components/ChatInterface';
+import NeuralStatus from '../../components/NeuralStatus'; // V2.2 NEW
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api/chat').replace('/api/chat', '');
 
@@ -75,8 +76,8 @@ export default function ChatPage() {
               A
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white">Aura V2</h1>
-              <p className="text-xs text-gray-500">Autonomous Agent</p>
+              <h1 className="text-lg font-bold text-white">Aura</h1>
+              <p className="text-[10px] text-purple-400 font-bold uppercase tracking-tighter">Research Prototype V2.2</p>
             </div>
           </div>
         </div>
@@ -173,7 +174,8 @@ export default function ChatPage() {
       </button>
 
       {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 relative">
+        <NeuralStatus />
         <ChatInterface />
       </main>
     </div>
