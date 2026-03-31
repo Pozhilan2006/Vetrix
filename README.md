@@ -23,6 +23,19 @@ You just type naturally. Aura understands your intent, requests missing details,
 - 🛡️ **Decision Engine & Safety Guard:** A deterministic multi-factor controller that enforces `min(0.1 ETH, 80% balance)` safety thresholds and protects gas reserves.
 - 📜 **Verifiable Execution Model:** Maps natural language intent directly to on-chain `txHash` in a persistent audit trail.
 
+## 📚 Project Documentation
+
+To understand the architecture, UI design, and development lifecycle of Aura V3.0, please refer to the following internal documents:
+
+- 📘 **[Project Plan V3.0](./AI%20+Web3%20__%20Project%20Plan%20-%20V3.0.md)** — The academic evolution, technical stack, and feature summary.
+- 🚀 **[Handover & UI Blueprint](./HANDOVER_AND_UI_BLUEPRINT.md)** — A complete guide for successors, detailing the Neural UI and technical architecture.
+- 📋 **[Test Manifest](./TEST_MANIFEST.md)** — Step-by-step viva presentation testing manual to verify every feature.
+- 📊 **[Codebase & Feature Report](./REPORT.md)** — Details codebase structure and verified working features.
+- ⚙️ **[Architecture Overview](./V2_ARCHITECTURE.md)** — System overviews, core component relationships, and data flow.
+- 🔄 **[User Workflow Blueprint](./V2_WORKFLOW.md)** — Step-by-step lifecycle of an autonomous transaction execution.
+- 🧠 **[Context Layer Deep Dive](./CONTEXT_LAYER.md)** — Breakdown of memory, identity mapping, and price rendering details.
+- ✅ **[QA Report](./QA_REPORT.md)** — Testing history and error handling validations.
+
 ## 🏗️ Version 2 Architecture Transition
 
 In V1 (Non-Custodial), the bot was simply an intent parser that prepared transaction payloads for the user to manually sign in their browser extension. 
