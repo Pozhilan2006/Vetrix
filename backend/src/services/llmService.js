@@ -1,4 +1,4 @@
-// backend/src/services/llmService.js — unchanged from V1
+// backend/src/services/llmService.js — V2.4 INTENT LAYER
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { z } = require('zod');
 const SYSTEM_PROMPT = require('../utils/systemPrompt');
@@ -6,10 +6,10 @@ require('dotenv').config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Zod schema — every Gemini response must match this exactly
+// Zod schema — V2.4: Expanded actions for memory and contacts
 const IntentSchema = z.object({
   intent_detected: z.boolean(),
-  action: z.enum(['transfer', 'swap', 'balance', 'explanation', 'unknown']),
+  action: z.enum(['transfer', 'swap', 'balance', 'explanation', 'repeat', 'add_contact', 'unknown']),
   chain: z.enum(['ethereum', 'polygon', 'arbitrum', 'sepolia']).nullable(),
   asset: z.enum(['ETH', 'USDC', 'USDT', 'DAI']).nullable(),
   amount: z.string().nullable(),
