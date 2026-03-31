@@ -1,62 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  --font-inter: "Inter", system-ui, -apple-system, sans-serif;
+  /* Core Foundation */
+  --bg-black:   #000000;
+  --bg-depth:   #0a0a0a;
+  --bg-surface: #111111;
+  --bg-surface-hover: #1a1a1a;
+  
+  --border-neutral: #1a1a1a;
+  --border-subtle:  #262626;
+
+  /* Text System */
+  --text-primary:   #ffffff;
+  --text-secondary: #9ca3af;
+  --text-muted:     #4b5563;
+
+  /* Financial Accents */
+  --accent-green:   #22c55e;
+  --accent-green-h: #16a34a;
+  --accent-red:     #ef4444;
+  --accent-yellow:  #eab308;
+
+  /* Spacing Primitives */
+  --s-4: 4px; --s-8: 8px; --s-12: 12px; --s-16: 16px; --s-24: 24px; --s-32: 32px;
+  
+  /* Texture */
+  --grid-color: rgba(255, 255, 255, 0.03);
 }
 
-* {
+/* ─── Global Reset ─────────────────────────────────────────────────────── */
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
-
-html,
-body {
-  height: 100%;
-  font-family: var(--font-inter);
-  background: #0a0a1a;
-  color: #ffffff;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar styling */
-.scrollbar-thin::-webkit-scrollbar {
-  width: 4px;
+body {
+  background: var(--bg-black);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  line-height: 1.5;
 }
 
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
+/* ─── Typography Utils ─────────────────────────────────────────────────── */
+.text-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.3);
-  border-radius: 4px;
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.02em;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.5);
+/* ─── Layout Primitives ────────────────────────────────────────────────── */
+.fintech-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-neutral);
+  border-radius: 16px;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Selection color */
-::selection {
-  background: rgba(139, 92, 246, 0.4);
-  color: white;
+.fintech-card-hover:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-subtle);
+  transform: translateY(-1px);
 }
 
-/* Focus styles */
-input:focus,
-button:focus-visible {
-  outline: 2px solid rgba(139, 92, 246, 0.5);
-  outline-offset: 2px;
+/* ─── Scrollbars ───────────────────────────────────────────────────────── */
+.scrollbar-hidden::-webkit-scrollbar { display: none; }
+.scrollbar-hidden { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Shared Animations ────────────────────────────────────────────────── */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slide-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+
+.animate-fade-in { animation: fade-in 0.2s ease-out both; }
+.animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.6s infinite linear;
+  border-radius: 8px;
 }
 
-/* Animation for loading dots */
-@keyframes bounce {
-  0%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-6px);
-  }
+@keyframes bounce-dot {
+  0%, 80%, 100% { transform: translateY(0);  opacity: 0.3; }
+  40%           { transform: translateY(-4px); opacity: 1; }
+}
+
+.typing-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent-green);
+  animation: bounce-dot 1.2s infinite ease-in-out;
+  display: inline-block;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.30s; }
+
+/* ─── Background Texture ───────────────────────────────────────────────── */
+.bg-dot-grid {
+  background-image: radial-gradient(var(--grid-color) 1px, transparent 1px);
+  background-size: 24px 24px;
 }

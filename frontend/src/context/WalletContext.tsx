@@ -10,8 +10,14 @@ interface WalletContextType {
   provider: ethers.BrowserProvider | null;
   isConnected: boolean;
   isConnecting: boolean;
+  balances: { asset: string; amount: string; isNative: boolean; contractAddress?: string }[];
+  history: any[];
+  prices: Record<string, number>;
+  loading: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
+  executeIntent: (intent: any) => Promise<void>;
+  refreshBalances: () => Promise<void>;
   error: string | null;
 }
 
@@ -22,8 +28,14 @@ const WalletContext = createContext<WalletContextType>({
   provider: null,
   isConnected: false,
   isConnecting: false,
+  balances: [],
+  history: [],
+  prices: { ETH: 3200, USDC: 1, USDT: 1, DAI: 1 },
+  loading: false,
   connect: async () => {},
   disconnect: () => {},
+  executeIntent: async () => {},
+  refreshBalances: async () => {},
   error: null,
 });
 
@@ -39,18 +51,66 @@ declare global {
   }
 }
 
+const API_BASE = 'http://localhost:3001/api';
+
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const [address, setAddress] = useState<string | null>(null);
   const [chainId, setChainId] = useState<string | null>(null);
   const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
   const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [balances, setBalances] = useState<any[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [prices, setPrices] = useState<Record<string, number>>({ ETH: 3200, USDC: 1, USDT: 1, DAI: 1 });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initializedRef = useRef(false);
 
+  const fetchPrices = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/market/prices`);
+      const data = await res.json();
+      if (data) setPrices(data);
+    } catch (err) {
+      console.error('Price fetch error:', err);
+    }
+  }, []);
+
+  const fetchBalances = useCallback(async (walletAddress: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/wallet/balance/${walletAddress}`);
+      const data = await res.json();
+      if (data.balances) setBalances(data.balances);
+    } catch (err) {
+      console.error('Balance fetch error:', err);
+    }
+  }, []);
+
+  const fetchHistory = useCallback(async (walletAddress: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/wallet/history/${walletAddress}`);
+      const data = await res.json();
+      if (Array.isArray(data)) setHistory(data);
+    } catch (err) {
+      console.error('History fetch error:', err);
+    }
+  }, []);
+
+  const refreshBalances = useCallback(async () => {
+    if (address) {
+      setLoading(true);
+      await Promise.all([
+        fetchBalances(address),
+        fetchHistory(address),
+        fetchPrices(),
+      ]);
+      setLoading(false);
+    }
+  }, [address, fetchBalances, fetchHistory, fetchPrices]);
+
   const connect = useCallback(async () => {
     if (typeof window === 'undefined' || !window.ethereum) {
-      setError('MetaMask is not installed. Please install MetaMask to continue.');
+      setError('MetaMask is not installed.');
       return;
     }
 
@@ -59,7 +119,6 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const browserProvider = new ethers.BrowserProvider(window.ethereum!);
-      await browserProvider.send('wallet_requestPermissions', [{ eth_accounts: {} }]);
       await browserProvider.send('eth_requestAccounts', []);
 
       const walletSigner = await browserProvider.getSigner();
@@ -70,24 +129,65 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       setSigner(walletSigner);
       setAddress(walletAddress);
       setChainId(network.chainId.toString());
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to connect wallet';
-      setError(message);
-      console.error('Wallet connect error:', err);
+      
+      // Initial fetch
+      await Promise.all([
+        fetchBalances(walletAddress),
+        fetchHistory(walletAddress),
+        fetchPrices(),
+      ]);
+    } catch (err: any) {
+      setError(err.message || 'Failed to connect wallet');
     } finally {
       setIsConnecting(false);
     }
-  }, []);
+  }, [fetchBalances, fetchHistory, fetchPrices]);
 
   const disconnect = useCallback(() => {
     setAddress(null);
     setSigner(null);
     setProvider(null);
     setChainId(null);
+    setBalances([]);
+    setHistory([]);
     setError(null);
   }, []);
 
-  // Check if already connected on mount — runs only once
+  const executeIntent = useCallback(async (intent: any) => {
+    if (!signer || !address || !provider) {
+      setError('Wallet not fully connected.');
+      return;
+    }
+
+    try {
+      if (intent.action === 'send_eth') {
+        const tx = await signer.sendTransaction({
+          to: intent.to_address,
+          value: ethers.parseEther(intent.amount.toString()),
+        });
+        await tx.wait();
+        await refreshBalances();
+      } else {
+        setError(`Action ${intent.action} is not implemented.`);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Transaction failed');
+      throw err;
+    }
+  }, [signer, address, provider, refreshBalances]);
+
+  // Polling logic: Standardized to 12s for production efficiency
+  useEffect(() => {
+    if (!address) return;
+
+    const interval = setInterval(() => {
+      refreshBalances().catch(err => console.error('Auto-refresh sync error:', err));
+    }, 12000); 
+
+    return () => clearInterval(interval);
+  }, [address, refreshBalances]);
+
+  // Check if already connected on mount
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
@@ -102,11 +202,18 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         if (accounts.length > 0) {
           const walletSigner = await browserProvider.getSigner();
           const network = await browserProvider.getNetwork();
+          const walletAddress = await walletSigner.getAddress();
 
           setProvider(browserProvider);
           setSigner(walletSigner);
-          setAddress(await walletSigner.getAddress());
+          setAddress(walletAddress);
           setChainId(network.chainId.toString());
+          
+          await Promise.all([
+            fetchBalances(walletAddress),
+            fetchHistory(walletAddress),
+            fetchPrices(),
+          ]);
         }
       } catch (err) {
         console.error('Auto-connect check error:', err);
@@ -114,56 +221,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     };
 
     checkConnection();
-  }, []);
-
-  // Listen for MetaMask events
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.ethereum) return;
-
-    const handleAccountsChanged = async (accounts: unknown) => {
-      const accs = accounts as string[];
-      if (accs.length === 0) {
-        disconnect();
-      } else {
-        try {
-          const browserProvider = new ethers.BrowserProvider(window.ethereum!);
-          const walletSigner = await browserProvider.getSigner();
-          setProvider(browserProvider);
-          setSigner(walletSigner);
-          setAddress(accs[0]);
-        } catch (err) {
-          console.error('Account change error:', err);
-        }
-      }
-    };
-
-    const handleChainChanged = async (_chainId: unknown) => {
-      try {
-        const id = _chainId as string;
-        setChainId(parseInt(id, 16).toString());
-        // Rebuild provider for new chain
-        const browserProvider = new ethers.BrowserProvider(window.ethereum!);
-        const accounts = await browserProvider.listAccounts();
-        if (accounts.length > 0) {
-          const walletSigner = await browserProvider.getSigner();
-          setProvider(browserProvider);
-          setSigner(walletSigner);
-        }
-      } catch (err) {
-        console.error('Chain change error:', err);
-      }
-    };
-
-    window.ethereum.on('accountsChanged', handleAccountsChanged);
-    window.ethereum.on('chainChanged', handleChainChanged);
-
-    return () => {
-      if (window.ethereum) {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum.removeListener('chainChanged', handleChainChanged);
-      }
-    };
-  }, [disconnect]);
+  }, [fetchBalances, fetchHistory, fetchPrices]);
 
   return (
     <WalletContext.Provider
@@ -174,8 +232,14 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         provider,
         isConnected: !!address,
         isConnecting,
+        balances,
+        history,
+        prices,
+        loading,
         connect,
         disconnect,
+        executeIntent,
+        refreshBalances,
         error,
       }}
     >
