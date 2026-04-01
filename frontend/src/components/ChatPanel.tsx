@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useWallet } from '../context/WalletContext';
 import TransactionCard from './TransactionCard';
@@ -11,22 +11,51 @@ interface Message {
   intent?: any;
 }
 
-const ChatPanel: React.FC = () => {
+// Simple inline markdown renderer — handles **bold** and newlines
+function renderMarkdown(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{part.slice(2, -2)}</strong>;
+    }
+    // Handle newlines
+    return part.split('\n').map((line, j, arr) => (
+      <React.Fragment key={`${i}-${j}`}>
+        {line}
+        {j < arr.length - 1 && <br />}
+      </React.Fragment>
+    ));
+  });
+}
+
+interface ChatPanelProps {
+  lastTx?: { category: string; value: string; asset: string } | null;
+  ethAmount?: number;
+}
+
+const ChatPanel: React.FC<ChatPanelProps> = ({ lastTx, ethAmount = 0 }) => {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Hello! I'm Nexus, your AI-powered assistant. How can I help you today?" }
+    { role: 'assistant', content: "Hey! I'm Nexus. Tell me what you want to do — send, swap, check your balance, anything. I'll handle the blockchain part." }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { address, executeIntent } = useWallet();
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const { address } = useWallet();
 
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Smart suggestions derived from real wallet state
+  const suggestions = useMemo(() => {
+    const s: string[] = [];
+    if (ethAmount > 0) s.push(`Send ${(ethAmount * 0.1).toFixed(4)} ETH`);
+    else s.push('Send ETH to a friend');
+    s.push(lastTx ? 'Repeat my last transaction' : "What's my balance?");
+    s.push('How much will gas cost?');
+    return s;
+  }, [lastTx, ethAmount]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -34,189 +63,171 @@ const ChatPanel: React.FC = () => {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
-
     try {
       const resp = await axios.post('http://localhost:3001/api/chat', {
         message: input,
-        userAddress: address
+        session_id: sessionId,
+        wallet_address: address,
       });
-      
-      const assistantMsg: Message = { 
-        role: 'assistant', 
-        content: resp.data.message, 
-        intent: resp.data.intent 
-      };
-      setMessages(prev => [...prev, assistantMsg]);
-    } catch (err) {
-      setMessages(prev => [...prev, { role: 'system', content: 'Connection error. Please check your network and try again.' }]);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: resp.data.message,
+        intent: resp.data.intent,
+      }]);
+    } catch {
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: 'Connection error. Please check your network and try again.',
+      }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <div className="fintech-card" style={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      background: 'var(--bg-depth)',
-      border: '1px solid var(--border-neutral)',
-      overflow: 'hidden',
-    }}>
-      {/* Panel Header */}
-      <div style={{
-        padding: 'var(--s-16) var(--s-24)',
-        borderBottom: '1px solid var(--border-neutral)',
-        background: 'rgba(255,255,255,0.01)',
-        backdropFilter: 'blur(8px)',
-      }}>
-        <h3 className="text-label" style={{ fontSize: '10px', color: 'var(--text-muted)' }}>AI Assistant</h3>
-      </div>
+  // Called by TransactionCard when tx is confirmed — injects result into chat
+  const handleTxConfirmed = (summary: string) => {
+    setMessages(prev => [...prev, { role: 'assistant', content: summary }]);
+  };
 
-      {/* Messages Stream: Fixed height with auto-scroll */}
-      <div 
-        className="scrollbar-hidden"
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: 'var(--s-24)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'var(--s-24)',
-        }}
-      >
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+
+      {/* Message stream */}
+      <div className="scrollbar-hidden" style={{
+        flex: 1, overflowY: 'auto',
+        padding: '20px 20px 8px',
+        display: 'flex', flexDirection: 'column', gap: '20px',
+      }}>
         {messages.map((msg, i) => (
           <div key={i} className="animate-fade-in" style={{
-            display: 'flex',
-            flexDirection: 'column',
+            display: 'flex', flexDirection: 'column',
             alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start',
-            gap: 'var(--s-4)',
+            gap: '4px',
           }}>
-            {/* Label */}
-            <span className="text-label" style={{ 
-              fontSize: '8px', 
-              opacity: 0.4, 
-              textAlign: msg.role === 'user' ? 'right' : 'left',
-              width: '100%',
-              padding: msg.role === 'user' ? '0 var(--s-8) 0 0' : '0 0 0 var(--s-8)'
+            <span style={{
+              fontSize: '9px', fontWeight: 700, letterSpacing: '0.06em',
+              textTransform: 'uppercase', opacity: 0.35,
+              paddingLeft: msg.role !== 'user' ? '8px' : 0,
+              paddingRight: msg.role === 'user' ? '8px' : 0,
             }}>
-              {msg.role === 'user' ? 'IDENTITY' : 'NEXUS'}
+              {msg.role === 'user' ? 'You' : 'Nexus'}
             </span>
 
-            {/* Bubble */}
-            <div style={{
-              maxWidth: '85%',
-              padding: 'var(--s-12) var(--s-16)',
-              borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-              background: msg.role === 'user' ? 'var(--bg-surface)' : 'rgba(255,255,255,0.02)',
-              border: '1px solid var(--border-neutral)',
-              color: msg.role === 'user' ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontSize: '13px',
-              fontWeight: 500,
-              lineHeight: 1.5,
-              wordBreak: 'break-word',
-            }}>
-              {msg.content}
-            </div>
-
-            {/* Intent Card */}
-            {msg.intent && msg.intent.action !== 'none' && (
-              <div style={{ width: '100%', marginTop: 'var(--s-8)' }}>
+            {/* If there's an actionable intent, show the card INSTEAD of the bubble */}
+            {msg.intent && msg.intent.action !== 'none' ? (
+              <div style={{ width: '100%', maxWidth: '440px' }}>
                 <TransactionCard
                   intent={msg.intent}
-                  onConfirm={() => executeIntent(msg.intent)}
-                  onCancel={() => setMessages(prev => [...prev, { role: 'system', content: 'Operation cancelled.' }])}
-                  isExecuting={false}
+                  onConfirmed={handleTxConfirmed}
                 />
+              </div>
+            ) : (
+              <div style={{
+                maxWidth: '88%',
+                padding: '10px 14px',
+                borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                background: msg.role === 'user'
+                  ? 'var(--bg-surface)'
+                  : msg.role === 'system'
+                  ? 'rgba(239,68,68,0.06)'
+                  : 'rgba(255,255,255,0.02)',
+                border: msg.role === 'system'
+                  ? '1px solid rgba(239,68,68,0.15)'
+                  : '1px solid var(--border-neutral)',
+                color: msg.role === 'user'
+                  ? 'var(--text-primary)'
+                  : msg.role === 'system'
+                  ? 'var(--accent-red)'
+                  : 'var(--text-secondary)',
+                fontSize: '13px', fontWeight: 500, lineHeight: 1.55,
+                wordBreak: 'break-word',
+              }}>
+                {renderMarkdown(msg.content)}
               </div>
             )}
           </div>
         ))}
+
         {isLoading && (
-          <div style={{ display: 'flex', gap: '4px', padding: '4px 8px' }}>
+          <div className="animate-fade-in" style={{ display: 'flex', gap: '4px', padding: '4px 8px' }}>
             <div className="typing-dot" />
             <div className="typing-dot" />
             <div className="typing-dot" />
           </div>
         )}
-        <div ref={messagesEndRef} style={{ height: '1px' }} />
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Inline Suggestions (Part of Part 6 Fix) */}
+      {/* Smart suggestions */}
       <div style={{
-        padding: '0 var(--s-24) var(--s-12)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--s-8)',
-        fontSize: '11px',
-        color: 'var(--text-muted)',
-        fontWeight: 600,
+        padding: '8px 20px',
+        display: 'flex', flexWrap: 'wrap', gap: '6px',
       }}>
-        {['Send 0.01 ETH', 'Check balance', 'Swap ETH'].map((suggestion, idx, arr) => (
-          <React.Fragment key={suggestion}>
-            <span 
-              onClick={() => setInput(suggestion)}
-              style={{ cursor: 'pointer', transition: 'color 0.15s ease' }}
-              onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-green)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-            >
-              {suggestion}
-            </span>
-            {idx < arr.length - 1 && <span>•</span>}
-          </React.Fragment>
+        {suggestions.map(s => (
+          <button key={s} onClick={() => setInput(s)} style={{
+            padding: '5px 12px', borderRadius: '100px',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid var(--border-neutral)',
+            color: 'var(--text-muted)',
+            fontSize: '11px', fontWeight: 600,
+            cursor: 'pointer', transition: 'all 0.15s',
+            whiteSpace: 'nowrap',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.color = 'var(--accent-green)';
+            e.currentTarget.style.borderColor = 'rgba(34,197,94,0.3)';
+            e.currentTarget.style.background = 'rgba(34,197,94,0.05)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.color = 'var(--text-muted)';
+            e.currentTarget.style.borderColor = 'var(--border-neutral)';
+            e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+          }}
+          >
+            {s}
+          </button>
         ))}
       </div>
 
-      {/* Input Area: Fixed bottom, border-top only */}
-      <div style={{
-        padding: 'var(--s-16) var(--s-24)',
-        borderTop: '1px solid var(--border-neutral)',
-        background: 'var(--bg-black)',
-      }}>
+      {/* Input */}
+      <div style={{ padding: '0 20px 20px' }}>
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--s-12)',
-          background: '#0a0a0a',
-          padding: '4px 8px 4px 12px',
-          borderRadius: '8px',
-          border: '1px solid var(--border-neutral)',
-        }}>
+          display: 'flex', alignItems: 'center', gap: '10px',
+          background: 'rgba(255,255,255,0.02)',
+          padding: '4px 6px 4px 16px',
+          borderRadius: '14px',
+          border: '1px solid rgba(255,255,255,0.06)',
+          transition: 'border-color 0.15s',
+        }}
+        onFocus={() => {}}
+        >
           <input
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder="Ask Nexus..."
+            placeholder="Ask Nexus anything..."
             style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-primary)',
-              fontSize: '13px',
-              fontWeight: 500,
-              padding: '8px 0',
-              outline: 'none',
+              flex: 1, background: 'transparent', border: 'none',
+              color: 'var(--text-primary)', fontSize: '13px',
+              fontWeight: 500, padding: '10px 0', outline: 'none',
             }}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
             style={{
-              padding: '6px 12px',
-              borderRadius: '6px',
-              background: input.trim() ? 'var(--accent-green)' : 'transparent',
-              border: 'none',
-              color: '#000',
-              fontSize: '11px',
-              fontWeight: 800,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
+              padding: '8px 16px', borderRadius: '10px',
+              background: input.trim() ? 'var(--text-primary)' : 'transparent',
+              border: 'none', color: '#000',
+              fontSize: '11px', fontWeight: 800,
+              cursor: input.trim() ? 'pointer' : 'default',
+              transition: 'all 0.15s',
               opacity: input.trim() ? 1 : 0,
               pointerEvents: input.trim() ? 'auto' : 'none',
             }}
           >
-            SEND
+            Send
           </button>
         </div>
       </div>
