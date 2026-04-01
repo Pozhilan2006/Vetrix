@@ -3,6 +3,22 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { ethers } from 'ethers';
 
+export type TxStage =
+  | 'idle'
+  | 'signing'
+  | 'broadcasting'
+  | 'confirming'
+  | 'confirmed'
+  | 'failed';
+
+export interface TxProgress {
+  stage: TxStage;
+  hash?: string;
+  blockNumber?: number;
+  confirmations?: number;
+  error?: string;
+}
+
 interface WalletContextType {
   address: string | null;
   chainId: string | null;
@@ -16,7 +32,11 @@ interface WalletContextType {
   loading: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
-  executeIntent: (intent: any) => Promise<void>;
+  executeIntent: (intent: any) => Promise<string | null | undefined>;
+  executeIntentWithProgress: (
+    intent: any,
+    onProgress: (p: TxProgress) => void
+  ) => Promise<void>;
   refreshBalances: () => Promise<void>;
   error: string | null;
 }
@@ -34,7 +54,8 @@ const WalletContext = createContext<WalletContextType>({
   loading: false,
   connect: async () => {},
   disconnect: () => {},
-  executeIntent: async () => {},
+  executeIntent: async () => undefined,
+  executeIntentWithProgress: async () => {},
   refreshBalances: async () => {},
   error: null,
 });
@@ -167,12 +188,73 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         });
         await tx.wait();
         await refreshBalances();
+        return tx.hash;
       } else {
         setError(`Action ${intent.action} is not implemented.`);
+        return null;
       }
     } catch (err: any) {
       setError(err.message || 'Transaction failed');
       throw err;
+    }
+  }, [signer, address, provider, refreshBalances]);
+
+  const executeIntentWithProgress = useCallback(async (
+    intent: any,
+    onProgress: (p: TxProgress) => void
+  ) => {
+    if (!signer || !address || !provider) {
+      onProgress({ stage: 'failed', error: 'Wallet not fully connected.' });
+      return;
+    }
+    try {
+      onProgress({ stage: 'signing' });
+
+      if (intent.action === 'send_eth') {
+        const tx = await signer.sendTransaction({
+          to: intent.to_address,
+          value: ethers.parseEther(intent.amount.toString()),
+        });
+
+        onProgress({ stage: 'broadcasting', hash: tx.hash });
+
+        // Listen block-by-block for confirmation
+        const receipt = await new Promise<ethers.TransactionReceipt>((resolve, reject) => {
+          const onBlock = async (blockNumber: number) => {
+            try {
+              const r = await provider.getTransactionReceipt(tx.hash);
+              if (r && r.status !== null) {
+                provider.off('block', onBlock);
+                if (r.status === 1) resolve(r);
+                else reject(new Error('Transaction reverted on-chain.'));
+              } else {
+                onProgress({ stage: 'confirming', hash: tx.hash, blockNumber });
+              }
+            } catch (e) {
+              provider.off('block', onBlock);
+              reject(e);
+            }
+          };
+          provider.on('block', onBlock);
+          // Fallback via tx.wait
+          tx.wait(1).then(r => {
+            if (r) { provider.off('block', onBlock); resolve(r); }
+          }).catch(e => { provider.off('block', onBlock); reject(e); });
+        });
+
+        onProgress({
+          stage: 'confirmed',
+          hash: tx.hash,
+          blockNumber: receipt.blockNumber,
+          confirmations: 1,
+        });
+
+        await refreshBalances();
+      } else {
+        onProgress({ stage: 'failed', error: `Action "${intent.action}" is not yet supported.` });
+      }
+    } catch (err: any) {
+      onProgress({ stage: 'failed', error: err.message || 'Transaction failed.' });
     }
   }, [signer, address, provider, refreshBalances]);
 
@@ -239,6 +321,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         connect,
         disconnect,
         executeIntent,
+        executeIntentWithProgress,
         refreshBalances,
         error,
       }}

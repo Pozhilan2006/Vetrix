@@ -33,6 +33,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api', chatRoutes);
+app.use('/api', require('./src/routes/apiRoutes'));
 
 // 404 handler
 app.use((req, res) => {

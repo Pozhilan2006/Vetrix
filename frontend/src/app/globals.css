@@ -111,3 +111,32 @@ body {
   background-image: radial-gradient(var(--grid-color) 1px, transparent 1px);
   background-size: 24px 24px;
 }
+
+/* ─── Luxury Elements (Glassmorphism & Orbs) ───────────────────────────── */
+@keyframes orb-float {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.glow-orb {
+  position: absolute;
+  width: 40vw;
+  height: 40vw;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.15) 0%, transparent 60%);
+  filter: blur(80px);
+  z-index: 0;
+  animation: orb-float 20s infinite alternate cubic-bezier(0.5, 0, 0.5, 1);
+  pointer-events: none;
+}
+
+.glass-panel {
+  background: rgba(10, 10, 10, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
