@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Aura V2 — Autonomous AI Web3 Agent",
+  title: "Vetrix V3 — Autonomous AI Web3 Agent",
   description:
     "Autonomous AI Web3 agent. Type naturally, execute blockchain transactions instantly. No MetaMask popups — the bot handles everything.",
   keywords: ["Web3", "AI", "blockchain", "autonomous agent", "Ethereum", "Sepolia", "chatbot", "DeFi"],

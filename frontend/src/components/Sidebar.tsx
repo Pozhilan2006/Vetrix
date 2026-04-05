@@ -36,7 +36,7 @@ const Sidebar: React.FC = () => {
           fontWeight: 800,
           color: 'var(--text-primary)',
         }}>
-          Nexus
+          Vetrix
         </span>
       </div>
 

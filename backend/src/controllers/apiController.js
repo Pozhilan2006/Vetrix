@@ -59,55 +59,70 @@ const getMarketPrices = async (req, res) => {
   }
 };
 
+const { getAllContacts } = require('../utils/db');
+
 // 3. Get Wallet History (Alchemy Native JSON-RPC)
 const getHistory = async (req, res) => {
   const { address } = req.params;
   if (!address) return res.status(400).json({ error: 'Address is required' });
 
-  const alchemyUrl = process.env.ALCHEMY_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com';
+  // Use the verified active Alchemy Key
+  const alchemyUrl = process.env.ALCHEMY_RPC_URL;
+  if (!alchemyUrl) {
+    return res.json({ transfers: [] });
+  }
 
-  // The 'alchemy_getAssetTransfers' specification
-  const payload = {
-    jsonrpc: '2.0',
-    id: 1,
-    method: 'alchemy_getAssetTransfers',
-    params: [
-      {
-        fromBlock: '0x0',
-        toBlock: 'latest',
-        toAddress: address,
-        category: ['external', 'erc20'],
-        withMetadata: false,
-        excludeZeroValue: true,
-        maxCount: '0x14', // 20 results max for UI speed
-      },
-    ],
+  // To get a full picture, we must fetch BOTH incoming and outgoing, including historical metadata timestamps
+  const payloadOutgoing = {
+    jsonrpc: '2.0', id: 1, method: 'alchemy_getAssetTransfers',
+    params: [{ fromBlock: '0x0', toBlock: 'latest', fromAddress: address, category: ['external', 'erc20'], excludeZeroValue: true, maxCount: '0x14', withMetadata: true }],
+  };
+  
+  const payloadIncoming = {
+    jsonrpc: '2.0', id: 2, method: 'alchemy_getAssetTransfers',
+    params: [{ fromBlock: '0x0', toBlock: 'latest', toAddress: address, category: ['external', 'erc20'], excludeZeroValue: true, maxCount: '0x14', withMetadata: true }],
   };
 
   try {
-    const response = await axios.post(alchemyUrl, payload, { headers: { 'Content-Type': 'application/json' }, timeout: 8000 });
-    
-    // Alchemy specific response handling
-    if (!response.data || !response.data.result) {
-      return res.json({ transfers: [] });
-    }
+    const [outRes, inRes] = await Promise.all([
+      axios.post(alchemyUrl, payloadOutgoing, { headers: { 'Content-Type': 'application/json' }, timeout: 8000 }),
+      axios.post(alchemyUrl, payloadIncoming, { headers: { 'Content-Type': 'application/json' }, timeout: 8000 })
+    ]);
 
-    const rawTransfers = response.data.result.transfers || [];
+    const outTransfers = outRes.data?.result?.transfers || [];
+    const inTransfers = inRes.data?.result?.transfers || [];
     
-    // Clean up data for the UI Component
-    const formattedHistory = rawTransfers.map((tx) => ({
-      hash: tx.hash,
-      asset: tx.asset,
-      value: tx.value,
-      from: tx.from,
-      to: tx.to,
-      timestamp: Date.now(), // Simulated since alchemy free block metadata is expensive
-    }));
+    // Combine, sort, and slice to latest
+    const rawTransfers = [...outTransfers, ...inTransfers];
+    
+    // Load local context network for reverse lookup
+    const contacts = getAllContacts(address);
+    const getContactName = (addr) => {
+      if (!addr) return null;
+      const match = contacts.find(c => c.address.toLowerCase() === addr.toLowerCase());
+      return match ? match.name : null;
+    };
+
+    const formattedHistory = rawTransfers.map((tx) => {
+      const isOutgoing = tx.from.toLowerCase() === address.toLowerCase();
+      const relativeAddr = isOutgoing ? tx.to : tx.from;
+
+      return {
+        hash: tx.hash,
+        asset: tx.asset,
+        value: tx.value?.toString() || '0',
+        from: tx.from,
+        to: tx.to,
+        contactName: getContactName(relativeAddr),
+        category: isOutgoing ? 'external' : 'receive',
+        timestamp: tx.metadata?.blockTimestamp ? Date.parse(tx.metadata.blockTimestamp) : Date.now(),
+      };
+    });
 
     return res.json({ transfers: formattedHistory });
   } catch (error) {
-    console.error('History Fetch Error:', error.message);
-    return res.status(503).json({ error: 'Failed to fetch transaction history' });
+    console.error('Alchemy History Fetch Error:', error.message);
+    return res.status(503).json({ error: 'Failed to fetch transaction history safely.' });
   }
 };
 

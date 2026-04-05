@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
 
 const TransactionHistory: React.FC = () => {
   const { history, loading } = useWallet();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (loading && history.length === 0) return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-16)', marginTop: 'var(--s-24)' }}>
@@ -42,7 +43,10 @@ const TransactionHistory: React.FC = () => {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', borderTop: '1px solid var(--border-neutral)' }}>
-          {history.map((tx, i) => (
+          {[...history]
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, isExpanded ? history.length : 4)
+            .map((tx, i) => (
             <div key={i} style={{
               display: 'flex',
               alignItems: 'center',
@@ -54,8 +58,14 @@ const TransactionHistory: React.FC = () => {
                 <div style={{ fontSize: '12px', fontWeight: 700, color: tx.category === 'external' ? 'var(--accent-red)' : 'var(--accent-green)', letterSpacing: '0.02em' }}>
                   {tx.category === 'external' ? 'SEND' : 'RECEIVE'}
                 </div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 500 }}>
-                  {tx.hash.slice(0, 8)}...{tx.hash.slice(-6)}
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 500, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {tx.contactName && (
+                    <span style={{ color: 'var(--text-primary)' }}>{tx.contactName}</span>
+                  )}
+                  {tx.contactName && <span style={{ opacity: 0.5 }}>→</span>}
+                  <span style={{ fontFamily: 'monospace' }}>
+                    {(tx.category === 'external' ? tx.to : tx.from).slice(0, 6)}...{(tx.category === 'external' ? tx.to : tx.from).slice(-4)}
+                  </span>
                 </div>
               </div>
 
@@ -68,12 +78,28 @@ const TransactionHistory: React.FC = () => {
                 }}>
                   {tx.category === 'external' ? '-' : '+'}{parseFloat(tx.value).toFixed(4)} {tx.asset}
                 </div>
-                <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
-                  Confirmed
+                <div style={{ fontSize: '8px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, marginTop: '2px' }}>
+                  {new Date(tx.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })} • {new Date(tx.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
             </div>
           ))}
+          {history.length > 4 && (
+            <div style={{
+              textAlign: 'center',
+              padding: '12px 0 0 0',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: 'var(--text-muted)',
+              cursor: 'pointer'
+            }}
+            onClick={() => setIsExpanded(!isExpanded)}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+            >
+              {isExpanded ? 'See less' : 'See more'}
+            </div>
+          )}
         </div>
       )}
     </div>
