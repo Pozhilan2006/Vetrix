@@ -4,11 +4,12 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useWallet } from '../context/WalletContext';
 import TransactionCard from './TransactionCard';
+import TxProcessingLoader from './TxProcessingLoader';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
-  intent?: any;
+  data?: any;
 }
 
 // Simple inline markdown renderer — handles **bold** and newlines
@@ -35,10 +36,11 @@ interface ChatPanelProps {
 
 const ChatPanel: React.FC<ChatPanelProps> = ({ lastTx, ethAmount = 0 }) => {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Hey! I'm Nexus. Tell me what you want to do — send, swap, check your balance, anything. I'll handle the blockchain part." }
+    { role: 'assistant', content: "Hey! I'm Vetrix. Tell me what you want to do — send, swap, check your balance, anything. I'll handle the blockchain part." }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessingTx, setIsProcessingTx] = useState(false);
   const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { address } = useWallet();
@@ -63,6 +65,14 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ lastTx, ethAmount = 0 }) => {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
+    // If the user's msg is an affirmative response to a confirmation, show the tx loader
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && lastMsg.data && lastMsg.data.needs_confirmation) {
+      if (['yes', 'confirm', 'do it', 'yup', 'ok', 'go ahead'].includes(input.toLowerCase().trim())) {
+        setIsProcessingTx(true);
+      }
+    }
+    
     try {
       const resp = await axios.post('http://localhost:3001/api/chat', {
         message: input,
@@ -72,7 +82,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ lastTx, ethAmount = 0 }) => {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: resp.data.message,
-        intent: resp.data.intent,
+        data: resp.data.data,
       }]);
     } catch {
       setMessages(prev => [...prev, {
@@ -81,6 +91,39 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ lastTx, ethAmount = 0 }) => {
       }]);
     } finally {
       setIsLoading(false);
+      setIsProcessingTx(false);
+    }
+  };
+
+  const handleActionSend = async (actionText: string) => {
+    if (isLoading) return;
+    const userMsg: Message = { role: 'user', content: actionText };
+    setMessages(prev => {
+      const newMessages = prev.map(m => m.data ? { ...m, data: { ...m.data, needs_confirmation: false } } : m);
+      return [...newMessages, userMsg];
+    });
+    setIsLoading(true);
+    if (actionText === 'Confirm') setIsProcessingTx(true);
+    
+    try {
+      const resp = await axios.post('http://localhost:3001/api/chat', {
+        message: actionText.toLowerCase(),
+        session_id: sessionId,
+        wallet_address: address,
+      });
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: resp.data.message,
+        data: resp.data.data,
+      }]);
+    } catch {
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: 'Connection error. Please check your network and try again.',
+      }]);
+    } finally {
+      setIsLoading(false);
+      setIsProcessingTx(false);
     }
   };
 
@@ -110,49 +153,80 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ lastTx, ethAmount = 0 }) => {
               paddingLeft: msg.role !== 'user' ? '8px' : 0,
               paddingRight: msg.role === 'user' ? '8px' : 0,
             }}>
-              {msg.role === 'user' ? 'You' : 'Nexus'}
+              {msg.role === 'user' ? 'You' : 'Vetrix'}
             </span>
 
-            {/* If there's an actionable intent, show the card INSTEAD of the bubble */}
-            {msg.intent && msg.intent.action !== 'none' ? (
-              <div style={{ width: '100%', maxWidth: '440px' }}>
-                <TransactionCard
-                  intent={msg.intent}
-                  onConfirmed={handleTxConfirmed}
-                />
-              </div>
-            ) : (
-              <div style={{
-                maxWidth: '88%',
-                padding: '10px 14px',
-                borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                background: msg.role === 'user'
-                  ? 'var(--bg-surface)'
-                  : msg.role === 'system'
-                  ? 'rgba(239,68,68,0.06)'
-                  : 'rgba(255,255,255,0.02)',
-                border: msg.role === 'system'
-                  ? '1px solid rgba(239,68,68,0.15)'
-                  : '1px solid var(--border-neutral)',
-                color: msg.role === 'user'
-                  ? 'var(--text-primary)'
-                  : msg.role === 'system'
-                  ? 'var(--accent-red)'
-                  : 'var(--text-secondary)',
-                fontSize: '13px', fontWeight: 500, lineHeight: 1.55,
-                wordBreak: 'break-word',
-              }}>
-                {renderMarkdown(msg.content)}
-              </div>
-            )}
+            <div style={{
+              maxWidth: '88%',
+              padding: '10px 14px',
+              borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+              background: msg.role === 'user'
+                ? 'var(--bg-surface)'
+                : msg.role === 'system'
+                ? 'rgba(239,68,68,0.06)'
+                : 'rgba(255,255,255,0.02)',
+              border: msg.role === 'system'
+                ? '1px solid rgba(239,68,68,0.15)'
+                : '1px solid var(--border-neutral)',
+              color: msg.role === 'user'
+                ? 'var(--text-primary)'
+                : msg.role === 'system'
+                ? 'var(--accent-red)'
+                : 'var(--text-secondary)',
+              fontSize: '13px', fontWeight: 500, lineHeight: 1.55,
+              wordBreak: 'break-word',
+            }}>
+              {renderMarkdown(msg.content)}
+              {msg.data && msg.data.needs_confirmation && (
+                <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+                  <button
+                    onClick={() => handleActionSend('Confirm')}
+                    disabled={isLoading}
+                    style={{
+                      padding: '8px 18px', borderRadius: '100px',
+                      background: 'var(--accent-green)',
+                      border: 'none', color: '#000',
+                      fontSize: '12px', fontWeight: 700,
+                      cursor: isLoading ? 'default' : 'pointer',
+                      transition: 'all 0.15s',
+                      opacity: isLoading ? 0.5 : 1,
+                    }}
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={() => handleActionSend('Cancel')}
+                    disabled={isLoading}
+                    style={{
+                      padding: '8px 18px', borderRadius: '100px',
+                      background: 'transparent',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: 'var(--text-muted)',
+                      fontSize: '12px', fontWeight: 700,
+                      cursor: isLoading ? 'default' : 'pointer',
+                      transition: 'all 0.15s',
+                      opacity: isLoading ? 0.5 : 1,
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         ))}
 
         {isLoading && (
-          <div className="animate-fade-in" style={{ display: 'flex', gap: '4px', padding: '4px 8px' }}>
-            <div className="typing-dot" />
-            <div className="typing-dot" />
-            <div className="typing-dot" />
+          <div style={{ padding: '4px 8px' }}>
+            {isProcessingTx ? (
+              <TxProcessingLoader />
+            ) : (
+              <div className="animate-fade-in" style={{ display: 'flex', gap: '4px' }}>
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+              </div>
+            )}
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -206,7 +280,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ lastTx, ethAmount = 0 }) => {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder="Ask Nexus anything..."
+            placeholder="Ask Vetrix anything..."
             style={{
               flex: 1, background: 'transparent', border: 'none',
               color: 'var(--text-primary)', fontSize: '13px',

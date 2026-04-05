@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '../context/WalletContext';
 import { useRouter } from 'next/navigation';
 
@@ -15,9 +15,14 @@ export default function LandingPage() {
     setIsConnecting(false);
   };
 
+  useEffect(() => {
+    if (address) {
+      router.push('/chat');
+    }
+  }, [address, router]);
+
   if (address) {
-    router.push('/chat');
-    return null;
+    return null; // Prevents the screen from flashing before redirect
   }
 
   return (
@@ -60,7 +65,7 @@ export default function LandingPage() {
           marginBottom: '24px',
           boxShadow: '0 4px 24px rgba(0,0,0,0.4)'
         }}>
-          Nexus Autonomous Framework v3.0
+          Vetrix Autonomous Framework v3.0
         </div>
 
         <h1 style={{

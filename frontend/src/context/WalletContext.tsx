@@ -111,7 +111,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     try {
       const res = await fetch(`${API_BASE}/wallet/history/${walletAddress}`);
       const data = await res.json();
-      if (Array.isArray(data)) setHistory(data);
+      if (data.transfers && Array.isArray(data.transfers)) setHistory(data.transfers);
     } catch (err) {
       console.error('History fetch error:', err);
     }

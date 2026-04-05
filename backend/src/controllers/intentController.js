@@ -1,5 +1,5 @@
 // backend/src/controllers/intentController.js — V2.4 FINAL CONSOLIDATED
-// Core of the Aura Autonomous Agent. Handles intent routing, context resolution,
+// Core of the Vetrix Autonomous Agent. Handles intent routing, context resolution,
 // trust-layer confirmations, and autonomous execution.
 
 const { parseUserIntent } = require('../services/llmService');
@@ -69,7 +69,7 @@ const handleChat = async (req, res) => {
       default:
         return res.json({
           next_step: 'ask_user',
-          message: intent.human_readable_summary || "Hello! I'm Aura, your Web3 assistant. I can help you send tokens, check balances, or explain blockchain concepts.",
+          message: intent.human_readable_summary || "Hello! I'm Vetrix, your Web3 assistant. I can help you send tokens, check balances, or explain blockchain concepts.",
         });
     }
   } catch (error) {

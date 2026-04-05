@@ -25,7 +25,7 @@ app.use((req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    service: 'aura-v2-autonomous-agent',
+    service: 'vetrix-v3-autonomous-agent',
     version: '2.0.0',
     timestamp: new Date().toISOString(),
   });
@@ -68,7 +68,7 @@ const verifyBotWallet = async () => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`\n🚀 Aura V2 (Autonomous Agent) running on port ${PORT}`);
+  console.log(`\n🚀 Vetrix V3 (Autonomous Agent) running on port ${PORT}`);
   console.log(`   Health: http://localhost:${PORT}/health`);
   console.log(`   Chat:   POST http://localhost:${PORT}/api/chat`);
   console.log(`   Clear:  POST http://localhost:${PORT}/api/chat/clear`);

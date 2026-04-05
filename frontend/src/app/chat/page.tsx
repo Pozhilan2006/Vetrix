@@ -59,7 +59,7 @@ export default function WalletHub() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '13px', fontWeight: 900, color: '#000',
           }}>N</div>
-          <span style={{ fontSize: '14px', fontWeight: 800, letterSpacing: '-0.02em' }}>Nexus</span>
+          <span style={{ fontSize: '14px', fontWeight: 800, letterSpacing: '-0.02em' }}>Vetrix</span>
           <span style={{
             fontSize: '10px', fontWeight: 700, color: 'var(--accent-green)',
             background: 'rgba(34,197,94,0.1)', padding: '2px 8px',
@@ -256,7 +256,7 @@ export default function WalletHub() {
                 fontSize: '14px',
               }}>🤖</div>
               <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Nexus AI Agent</div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Vetrix AI Agent</div>
                 <div style={{ fontSize: '11px', color: 'var(--accent-green)', fontWeight: 600 }}>
                   {isConnected ? '● Active' : '○ Standby'}
                 </div>
