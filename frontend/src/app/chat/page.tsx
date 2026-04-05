@@ -13,7 +13,7 @@ const NETWORK_NAMES: Record<string, string> = {
 };
 
 export default function WalletHub() {
-  const { balances, loading, address, disconnect, isConnected, chainId, prices, history } = useWallet();
+  const { balances, loading, address, disconnect, connect, isConnected, chainId, prices, history } = useWallet();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState<'send' | 'swap' | 'receive'>('send');
 
@@ -98,7 +98,7 @@ export default function WalletHub() {
             </div>
           )}
 
-          {isConnected && (
+          {isConnected ? (
             <button onClick={disconnect} style={{
               padding: '5px 14px', borderRadius: '100px',
               background: 'transparent',
@@ -111,6 +111,21 @@ export default function WalletHub() {
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
             >
               Disconnect
+            </button>
+          ) : (
+            <button onClick={connect} style={{
+              padding: '5px 14px', borderRadius: '100px',
+              background: 'var(--accent-green)',
+              border: 'none',
+              color: '#000',
+              fontSize: '11px', fontWeight: 800,
+              cursor: 'pointer', transition: 'all 0.15s',
+              boxShadow: '0 0 10px rgba(34, 197, 94, 0.3)'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.02)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+            >
+              Connect Wallet
             </button>
           )}
         </div>

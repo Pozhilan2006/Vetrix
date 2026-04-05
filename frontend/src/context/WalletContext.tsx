@@ -157,6 +157,9 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         fetchHistory(walletAddress),
         fetchPrices(),
       ]);
+      // Native Session Memory
+      localStorage.setItem('vetrix_connected', 'true');
+
     } catch (err: any) {
       setError(err.message || 'Failed to connect wallet');
     } finally {
@@ -172,6 +175,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     setBalances([]);
     setHistory([]);
     setError(null);
+    localStorage.removeItem('vetrix_connected');
   }, []);
 
   const executeIntent = useCallback(async (intent: any) => {
@@ -269,40 +273,42 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(interval);
   }, [address, refreshBalances]);
 
-  // Check if already connected on mount
+  // Session Memory: Check if a user previously established a connection intent
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
     if (typeof window === 'undefined' || !window.ethereum) return;
 
-    const checkConnection = async () => {
-      try {
-        const browserProvider = new ethers.BrowserProvider(window.ethereum!);
-        const accounts = await browserProvider.listAccounts();
+    // Only attempt silent connection if they previously clicked "Connect Wallet" 
+    if (localStorage.getItem('vetrix_connected') === 'true') {
+      const checkConnection = async () => {
+        try {
+          const browserProvider = new ethers.BrowserProvider(window.ethereum!);
+          const accounts = await browserProvider.listAccounts();
 
-        if (accounts.length > 0) {
-          const walletSigner = await browserProvider.getSigner();
-          const network = await browserProvider.getNetwork();
-          const walletAddress = await walletSigner.getAddress();
+          if (accounts.length > 0) {
+            const walletSigner = await browserProvider.getSigner();
+            const network = await browserProvider.getNetwork();
+            const walletAddress = await walletSigner.getAddress();
 
-          setProvider(browserProvider);
-          setSigner(walletSigner);
-          setAddress(walletAddress);
-          setChainId(network.chainId.toString());
-          
-          await Promise.all([
-            fetchBalances(walletAddress),
-            fetchHistory(walletAddress),
-            fetchPrices(),
-          ]);
+            setProvider(browserProvider);
+            setSigner(walletSigner);
+            setAddress(walletAddress);
+            setChainId(network.chainId.toString());
+            
+            await Promise.all([
+              fetchBalances(walletAddress),
+              fetchHistory(walletAddress),
+              fetchPrices(),
+            ]);
+          }
+        } catch (err) {
+          console.error('Auto-connect context recovery error:', err);
         }
-      } catch (err) {
-        console.error('Auto-connect check error:', err);
-      }
-    };
-
-    checkConnection();
+      };
+      checkConnection();
+    }
   }, [fetchBalances, fetchHistory, fetchPrices]);
 
   return (
