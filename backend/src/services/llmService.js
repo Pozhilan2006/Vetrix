@@ -1,12 +1,19 @@
-// backend/src/services/llmService.js — V2.4 INTENT LAYER
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+// backend/src/services/llmService.js — V3.1 VIVA STABLE
+const axios = require('axios');
 const { z } = require('zod');
 const SYSTEM_PROMPT = require('../utils/systemPrompt');
 require('dotenv').config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const apiKey = (process.env.GEMINI_API_KEY || '').trim();
 
-// Zod schema — V2.4: Expanded actions for memory and contacts
+// V3.1: Use the exact model strings verified from the API itself
+const MODELS = [
+  'models/gemini-2.5-flash',
+  'models/gemini-3.1-flash-live-preview',
+  'models/gemini-1.5-flash',
+  'models/gemini-pro'
+];
+
 const IntentSchema = z.object({
   intent_detected: z.boolean(),
   action: z.enum(['transfer', 'swap', 'balance', 'explanation', 'repeat', 'add_contact', 'unknown']),
@@ -25,49 +32,51 @@ const IntentSchema = z.object({
 });
 
 const parseUserIntent = async (userMessage, sessionState = {}) => {
-  try {
-    const model = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
-      systemInstruction: SYSTEM_PROMPT,
-    });
+  for (const modelPath of MODELS) {
+    try {
+      // V3.1: The correct URL format for raw axios calls is https://.../v1beta/{model_name}:generateContent
+      const url = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent`;
+      
+      const payload = {
+        contents: [{
+          parts: [{
+            text: `${SYSTEM_PROMPT}\n\nCONTEXT:\n${JSON.stringify(sessionState)}\n\nUSER INPUT:\n${userMessage}\n\nRESPONSE (JSON ONLY):`
+          }]
+        }]
+      };
 
-    const prompt = `Session State: ${JSON.stringify(sessionState)}\nUser Message: ${userMessage}`;
+      const response = await axios.post(url, payload, {
+        headers: { 'x-goog-api-key': apiKey },
+        timeout: 15000
+      });
 
-    const start = Date.now();
-    const result = await model.generateContent(prompt);
-    const latency = Date.now() - start;
-    console.log(`[LATENCY] Gemini response: ${latency}ms`);
+      const text = response.data.candidates[0].content.parts[0].text;
+      let jsonStr = text.replace(/```json\n?|\n?```/g, '').trim();
+      const first = jsonStr.indexOf('{');
+      const last = jsonStr.lastIndexOf('}');
+      if (first !== -1 && last !== -1) {
+        jsonStr = jsonStr.substring(first, last + 1);
+      }
 
-    const text = result.response.text();
-
-    // Strip markdown fences and extract JSON
-    let jsonStr = text.replace(/```json\n?|\n?```/g, '').trim();
-    const first = jsonStr.indexOf('{');
-    const last = jsonStr.lastIndexOf('}');
-    if (first !== -1 && last !== -1) {
-      jsonStr = jsonStr.substring(first, last + 1);
+      return IntentSchema.parse(JSON.parse(jsonStr));
+    } catch (error) {
+      console.warn(`[VIVA RECOVERY] Model ${modelPath} failed: ${error.message}`);
+      // Cycle to next model
     }
-
-    const raw = JSON.parse(jsonStr);
-
-    // Zod validation — throws if invalid
-    const parsed = IntentSchema.parse(raw);
-    return parsed;
-  } catch (error) {
-    console.error('LLM Intent Parsing Error:', error.message);
-    return {
-      intent_detected: false,
-      action: 'unknown',
-      chain: null,
-      asset: null,
-      amount: null,
-      to_address: null,
-      swap: null,
-      confidence: 0,
-      human_readable_summary: 'Sorry, I could not process that. Please try rephrasing your request.',
-      risk_flags: [],
-    };
   }
+
+  return {
+    intent_detected: false,
+    action: 'unknown',
+    chain: null,
+    asset: null,
+    amount: null,
+    to_address: null,
+    swap: null,
+    confidence: 0,
+    human_readable_summary: 'My intelligence layer is currently under high load. Please try again in 30 seconds.',
+    risk_flags: ['API Overload'],
+  };
 };
 
 module.exports = { parseUserIntent, IntentSchema };
