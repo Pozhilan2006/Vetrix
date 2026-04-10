@@ -1,4 +1,4 @@
-# 🖥️ Aura V3.0 — Frontend UI Source Codes
+# 🖥️ Vetrix V3.0 — Frontend UI Source Codes
 
 Here are the updated, core React components for the frontend interface. You can use these snippets as reference material for your manuscript's UI/UX or implementation sections.
 
@@ -63,7 +63,7 @@ export default function ChatPage() {
               A
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white">Aura</h1>
+              <h1 className="text-lg font-bold text-white">Vetrix</h1>
               <p className="text-[10px] text-purple-400 font-bold uppercase">Research Prototype V2.2</p>
             </div>
           </div>
@@ -104,7 +104,7 @@ const ChatInterface: React.FC = () => {
     {
       id: 'welcome',
       role: 'assistant',
-      content: "Hello! I'm Aura V2, your autonomous AI Web3 agent. I can send tokens, check balances, and explain blockchain concepts. Just tell me what you need — no MetaMask popups, I handle everything! 🤖",
+      content: "Hello! I'm Vetrix V2, your autonomous AI Web3 agent. I can send tokens, check balances, and explain blockchain concepts. Just tell me what you need — no MetaMask popups, I handle everything! 🤖",
       timestamp: Date.now(),
     },
   ]);

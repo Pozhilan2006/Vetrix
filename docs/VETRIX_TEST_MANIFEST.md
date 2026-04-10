@@ -1,6 +1,6 @@
-# 📋 Aura V2.4 — Feature Testing Manifest
+# 📋 Vetrix V2.4 — Feature Testing Manifest
 
-Use this guide to test every component of the Aura Autonomous Agent for your demo.
+Use this guide to test every component of the Vetrix Autonomous Agent for your demo.
 
 ## 1. 🧠 Context Intelligence (The Brain)
 - [ ] **Identity Resolution:** Type `"Send 0.001 ETH to John"` (or any name in your contact book). Verify it resolves to a `0x...` address.

@@ -54,7 +54,7 @@ Because the AI algorithm (Gemini) is stochastic (probabilistic), it is capable o
 
 ## 3. End-to-End Workflow & Architecture Blueprint
 
-The Aura V3.0 system relies on a rigorous 6-gate architectural pipeline designed to convert conversational chaos into algorithmic determinism.
+The Vetrix V3.0 system relies on a rigorous 6-gate architectural pipeline designed to convert conversational chaos into algorithmic determinism.
 
 ### Gate 1: Presentation & Conversational Memory (Frontend)
 The Next.js/React interface acts as the ingestion point. It manages terminal-style UI state. If a user provides an incomplete command (e.g., *"Send some ETH"*), the system utilizes **Multi-Turn Gap Filling**, persistently prompting the human via conversational dialogue until all required programmatic slots (Asset, Action, Amount, Receiver) are occupied in the session state.
@@ -69,7 +69,7 @@ Because generative algorithms cannot guarantee output structure, the JSON payloa
 
 ### Gate 4: The Context Intelligence Layer
 A perfect JSON intent is still practically useless without mathematical precision. V3.0 introduces three dedicated Microservices to bridge human ambiguity:
-1. **`contactService.js` (Identity Mapping):** Translates arbitrary string references ("Send to John") into verified `0x...` checksum addresses via the `aura_db.json` local store. Features a *Suggest-Add* fallback for unknown contacts.
+1. **`contactService.js` (Identity Mapping):** Translates arbitrary string references ("Send to John") into verified `0x...` checksum addresses via the `Vetrix_db.json` local store. Features a *Suggest-Add* fallback for unknown contacts.
 2. **`amountParser.js` (Fiat Oracles):** Translates arbitrary value requests ("$10 worth of ETH") into highly accurate fractional Wei units via a live `Axios` fetch to the CoinGecko pricing API.
 3. **`memoryService.js` (Historical Recall):** Translates relative pronoun requests ("Repeat my last transaction") by querying the persistent interaction log and replacing the empty payload with historically verified parameters.
 

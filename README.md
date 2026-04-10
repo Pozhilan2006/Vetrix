@@ -1,4 +1,4 @@
-# 🤖 Aura V2.1 — Research-Grade Autonomous Web3 Prototype
+# 🛡️ Vetrix — Research-Grade Autonomous Web3 Agent
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black?logo=next.js)
@@ -6,45 +6,46 @@
 ![Ethers.js](https://img.shields.io/badge/Ethers.js-v6-purple)
 ![Gemini AI](https://img.shields.io/badge/Gemini-2.0_Flash-orange)
 
-**Aura V2** is an advanced autonomous Web3 assistant built as a Final Year Project constraint. Unlike standard dApps where users must manually click through MetaMask popups to sign transactions, **Aura handles execution entirely on the server via a dedicated "burner wallet"**.
+**Vetrix** is an advanced autonomous Web3 assistant built as a Final Year Project constraint. Unlike standard dApps where users must manually click through MetaMask popups to sign transactions, **Vetrix handles execution entirely on the server via a dedicated "burner wallet"**.
 
-You just type naturally. Aura understands your intent, requests missing details, verifies balances, and autonomously executes blockchain transactions on your behalf.
+You just type naturally. Vetrix understands your intent, requests missing details, verifies balances, and autonomously executes blockchain transactions on your behalf.
 
 <p align="center">
-  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcHUyNWFwcWh4N2dudDhmMnVyOHcxdjYzemF5ZTh2bTI0aDhlYXF1NyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/L1R1tvI9svkIWwpVYr/giphy.gif" alt="Aura Banner" width="400"/>
+  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcHUyNWFwcWh4N2dudDhmMnVyOHcxdjYzemF5ZTh2bTI0aDhlYXF1NyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/L1R1tvI9svkIWwpVYr/giphy.gif" alt="Vetrix Banner" width="400"/>
 </p>
 
 ## ✨ Key Features
 
-- 🧠 **Context Intelligence Layer:** Aura converts human-native names (e.g., "John") and fiat-native values (e.g., "$10 worth") into precise blockchain parameters via a local persistent identity store and **CoinGecko** price feeds.
+- 🧠 **Context Intelligence Layer:** Vetrix converts human-native names (e.g., "John") and fiat-native values (e.g., "$10 worth") into precise blockchain parameters via a local persistent identity store and **CoinGecko** price feeds.
 - 🔄 **Transaction Context Recall:** Remembers your history. "Send the same as last time" autonomously pre-fills recipients and amounts from the audit log.
 - 📇 **Persistent Contact Book:** Zero-Setup local database managing custom name-to-address mappings for a friction-less experience.
-- 🤖 **Fast-Broadcast Autonomy:** Refactored execution model broadcasts transactions in **<2 seconds**, providing instant "Pending" UI feedback while confirming in the background.
-- 🛡️ **Decision Engine & Safety Guard:** A deterministic multi-factor controller that enforces `min(0.1 ETH, 80% balance)` safety thresholds and protects gas reserves.
+- 🤖 **Neural Processing UI:** Features a high-fidelity interaction layer with real-time feedback, processing transaction intents with zero-latency visual confirmation.
+- 🛡️ **Autonomous Shield Guard:** A deterministic multi-factor controller that enforces `min(0.1 ETH, 80% balance)` safety thresholds and protects gas reserves.
 - 📜 **Verifiable Execution Model:** Maps natural language intent directly to on-chain `txHash` in a persistent audit trail.
 
 ## 📚 Project Documentation
 
 To understand the architecture, UI design, and development lifecycle of Aura V3.0, please refer to the following internal documents:
 
-- 📘 **[Project Plan V3.0](./AI%20+Web3%20__%20Project%20Plan%20-%20V3.0.md)** — The academic evolution, technical stack, and feature summary.
-- 🚀 **[Handover & UI Blueprint](./HANDOVER_AND_UI_BLUEPRINT.md)** — A complete guide for successors, detailing the Neural UI and technical architecture.
-- 📋 **[Test Manifest](./TEST_MANIFEST.md)** — Step-by-step viva presentation testing manual to verify every feature.
-- 📊 **[Codebase & Feature Report](./REPORT.md)** — Details codebase structure and verified working features.
-- ⚙️ **[Architecture Overview](./V2_ARCHITECTURE.md)** — System overviews, core component relationships, and data flow.
-- 🔄 **[User Workflow Blueprint](./V2_WORKFLOW.md)** — Step-by-step lifecycle of an autonomous transaction execution.
-- 🧠 **[Context Layer Deep Dive](./CONTEXT_LAYER.md)** — Breakdown of memory, identity mapping, and price rendering details.
-- ✅ **[QA Report](./QA_REPORT.md)** — Testing history and error handling validations.
+- 📘 **[Project Plan](./docs/VETRIX_PROJECT_PLAN.md)** — The academic evolution, technical stack, and feature summary.
+- 🚀 **[Handover & UI Blueprint](./docs/VETRIX_HANDOVER_BLUEPRINT.md)** — A complete guide for successors, detailing the Neural UI and technical architecture.
+- 📋 **[Test Manifest](./docs/VETRIX_TEST_MANIFEST.md)** — Step-by-step presentation manual to verify every feature.
+- 📊 **[Codebase & Feature Report](./docs/VETRIX_FEATURE_REPORT.md)** — Details codebase structure and verified working features.
+- ⚙️ **[Architecture Overview](./docs/VETRIX_ARCHITECTURE.md)** — System overviews, core component relationships, and data flow.
+- 🔄 **[User Workflow Blueprint](./docs/VETRIX_WORKFLOW.md)** — Step-by-step lifecycle of an autonomous transaction execution.
+- 🧠 **[Context Layer Deep Dive](./docs/VETRIX_CONTEXT_LAYER.md)** — Breakdown of memory, identity mapping, and price rendering details.
+- ✅ **[QA Report](./docs/VETRIX_QA_REPORT.md)** — Testing history and error handling validations.
 
 ## 🏗️ Version 2 Architecture Transition
 
 In V1 (Non-Custodial), the bot was simply an intent parser that prepared transaction payloads for the user to manually sign in their browser extension. 
 
-In **V2 (Autonomous Agent)**, the architecture shifts execution logic to the backend:
-1. **User Types:** "Send 0.05 Sepolia ETH to Vitalik."
-2. **AI Parses:** Gemini extracts the exact parameters and Zod validates them.
-3. **Execution:** The backend uses the `walletService.js` to sign the transaction with the `BOT_PRIVATE_KEY` stored securely in the `.env`.
-4. **Confirmation:** The user receives a clickable Etherscan hash back directly in the chat interface.
+In **V2 (Vetrix Agent)**, the architecture shifts execution logic to the backend:
+1. **Natural Input:** User types "Send 0.05 Sepolia ETH to Vitalik."
+2. **Neural Parsing:** Gemini 2.0 extracts parameters and Zod validates the schema.
+3. **Shield Verification:** Vetrix verifies balances and gas thresholds via the Guardrail engine.
+4. **Execution:** The backend signs the transaction with the `BOT_PRIVATE_KEY` and broadcasts via Alchemy.
+5. **Real-time Pulse:** The user receives a clickable Etherscan hash and a "pulsing shield" UI status while the block confirms.
 
 ---
 
@@ -108,7 +109,7 @@ npm install
 npm run dev
 ```
 
-Visit `http://localhost:3000` to interact with Aura!
+Visit `http://localhost:3000` to interact with Vetrix!
 
 ---
 
@@ -126,5 +127,17 @@ Visit `http://localhost:3000` to interact with Aura!
 - Implementation of MPC (Multi-Party Computation) for secure key management.
 - Integration of local Lightweight LLMs to remove external API dependency.
 - On-chain intent verification via smart contract event logs.
+
+---
+
+## 📄 Publication & Citation
+
+This research and project have been officially published on **Zenodo**. If you use this work in your research, please cite it accordingly.
+
+- **Zenodo DOI:** [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.placeholder.svg)](https://doi.org/10.5281/zenodo.placeholder)
+- **Paper Title:** *Vetrix: An Autonomous Web3 Agent for Natural Language Transaction Execution*
+- **Repository:** [arun6184/aura-web3-bot-V2](https://github.com/arun6184/aura-web3-bot-V2)
+
+---
 
 <p align="center">Made with ❤️ for the Web3 Ecosystem</p>

@@ -1,13 +1,13 @@
 # 📚 AI + Web3 — Project Plan V3.0 (Evolution & Completion)
 
-**Project Title:** Aura: A Research-Grade Autonomous AI Web3 Agent System  
+**Project Title:** Vetrix: A Research-Grade Autonomous AI Web3 Agent System  
 **Academic Version:** V3.0 (Consolidating V2.1 + V2.2 Evolution)  
 **Status:** Implementation Complete / Ready for Viva Submission  
 
 ---
 
 ## 1. Executive Summary / Abstract
-The Aura Project is an investigation into the feasibility of **Human-Native Blockchain Interaction**. Moving away from traditional dApp signing models, Aura V3.0 introduces a fully autonomous, server-side agentic architecture. By integrating Large Language Models (LLMs) with a sovereign execution environment, the system abstracts the technical complexities (addresses, gas, decimals) into a seamless conversational experience using the **Context Intelligence Layer** and **Decision Engine Stability** patterns.
+The Vetrix Project is an investigation into the feasibility of **Human-Native Blockchain Interaction**. Moving away from traditional dApp signing models, Vetrix V3.0 introduces a fully autonomous, server-side agentic architecture. By integrating Large Language Models (LLMs) with a sovereign execution environment, the system abstracts the technical complexities (addresses, gas, decimals) into a seamless conversational experience using the **Context Intelligence Layer** and **Decision Engine Stability** patterns.
 
 ---
 
@@ -51,7 +51,7 @@ The system follows a **Modular Agentic Architecture**, separating intent parsing
 ---
 
 ## 6. Conclusion & Future Scope
-Aura V3.0 proves that blockchain interaction can be human-native without sacrificing autonomous capability. Future iterations will explore **Multi-Party Computation (MPC)** for distributed key security and **local lightweight LLMs** for 100% sovereign air-gapped operations.
+Vetrix V3.0 proves that blockchain interaction can be human-native without sacrificing autonomous capability. Future iterations will explore **Multi-Party Computation (MPC)** for distributed key security and **local lightweight LLMs** for 100% sovereign air-gapped operations.
 
 ---
 **Prepared For:** Final Year Project (FYP) Submission  
