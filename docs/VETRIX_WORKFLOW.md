@@ -1,4 +1,4 @@
-# 🔄 Aura V2.1 — 'Human-Native' User Workflow
+# 🔄 Vetrix V2.1 — 'Human-Native' User Workflow
 
 This document describes the step-by-step lifecycle of a user-initiated autonomous transaction in Version 2.1.
 
@@ -19,8 +19,8 @@ The system is designed to handle natural human intent, transforming a vague requ
 - **Validation:** `Zod` forces the Gemini JSON output into a strict schema.
 
 ### 3. Context Intelligence Resolution (Backend Layer)
-Aura now enters its intelligence layer to resolve the human-native fields:
-- **Contact Resolver:** Looks up `John` in the `aura_db.json`. Translates to `0x742...`.
+Vetrix now enters its intelligence layer to resolve the human-native fields:
+- **Contact Resolver:** Looks up `John` in the `Vetrix_db.json`. Translates to `0x742...`.
 - **Amount Parser:** Calls **CoinGecko API** for the current ETH price. Translates `$5` into $5 / 2500$ = `0.002`.
 - **Session Merge:** The temporary session memory is updated with the resolved values (`0x742...` and `0.002`).
 
@@ -36,5 +36,5 @@ Before execution, the **Decision Engine** performs a multi-factor check:
 - **Pending UI:** The frontend displays the Blue/Pulse "TX PENDING" badge.
 
 ### 6. Audit & Persistence
-- **Audit Logging:** The original user prompt ("Send $5 ETH to John") is logged in the `aura_db.json` history linked to the `txHash`.
+- **Audit Logging:** The original user prompt ("Send $5 ETH to John") is logged in the `Vetrix_db.json` history linked to the `txHash`.
 - **Final Result:** Once the transaction is mined in the background, the UI can be updated to "Confirmed."

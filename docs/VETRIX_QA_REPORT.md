@@ -1,7 +1,7 @@
-# 🧪 Aura V2.3 — Senior QA Audit Report
+# 🧪 Vetrix V2.3 — Senior QA Audit Report
 
 ## 1. Executive Summary
-This audit evaluates the **Trust & Recovery Layer (V2.3)** of the Aura Autonomous Agent. The system has transitioned from a direct-execution model to a **Safety-First Confirmation model**.
+This audit evaluates the **Trust & Recovery Layer (V2.3)** of the Vetrix Autonomous Agent. The system has transitioned from a direct-execution model to a **Safety-First Confirmation model**.
 
 **Overall Status:** 🟢 READY FOR VIVA
 **Crashes Detected:** 0
@@ -42,4 +42,4 @@ This audit evaluates the **Trust & Recovery Layer (V2.3)** of the Aura Autonomou
 ---
 
 ## 4. Final Recommendation for Viva
-Aura V2.3 is **stable, safe, and user-centric**. The implementation of the **Pre-flight Summary** is your strongest talking point for "AI Ethics" and "Safety-First Web3."
+Vetrix V2.3 is **stable, safe, and user-centric**. The implementation of the **Pre-flight Summary** is your strongest talking point for "AI Ethics" and "Safety-First Web3."

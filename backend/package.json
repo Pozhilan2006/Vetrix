@@ -1,7 +1,7 @@
 {
-  "name": "aura-backend-v2",
+  "name": "vetrix-backend",
   "version": "2.0.0",
-  "description": "Aura AI-Powered Web3 Transaction Assistant - V2 Autonomous Agent",
+  "description": "Vetrix AI-Powered Web3 Transaction Assistant - V2 Autonomous Agent",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

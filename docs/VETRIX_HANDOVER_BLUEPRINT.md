@@ -1,13 +1,13 @@
-# 📝 Aura V3.0 — Handover & UI Blueprint
+# 📝 Vetrix V3.0 — Handover & UI Blueprint
 
-This document is for the next developer/teammate taking over the Aura project. It explains the high-level architecture, UI design decisions, and future roadmap.
+This document is for the next developer/teammate taking over the Vetrix project. It explains the high-level architecture, UI design decisions, and future roadmap.
 
 ## 1. 🧠 Theoretical Architecture (The Intelligence Layer)
-Aura is an **Autonomous Web3 Agent**. It differs from regular dApps because it handles blockchain operations on the server side (Burner Wallet) to reduce user friction.
+Vetrix is an **Autonomous Web3 Agent**. It differs from regular dApps because it handles blockchain operations on the server side (Burner Wallet) to reduce user friction.
 
 - **Intent Pipeline:** `User Prompt` ➝ `Gemini LLM` ➝ `Zod Validation` ➝ `Decision Engine` ➝ `Blockchain`.
 - **The Context Stack:** We have four specialized services to handle natural language ambiguity:
-    - `contactService`: Resolves "John" to `0x...` using `aura_db.json`.
+    - `contactService`: Resolves "John" to `0x...` using `Vetrix_db.json`.
     - `amountParser`: Resolves "$10" to ETH using CoinGecko live prices.
     - `memoryService`: Resolves "Repeat last" by checking the audit log.
     - `decisionEngine`: The safety guard that enforces the 0.1 ETH cap before execution.
@@ -26,5 +26,5 @@ The UI is designed to be "minimalist yet premium," focusing on the AI's compute 
 
 ## 4. 🚀 Operational Guide
 - **Env Vars:** You must have `BOT_PRIVATE_KEY` with Sepolia ETH for the bot to pay gas.
-- **Database:** `aura_db.json` is a simple persistent store. Do not delete it if you want to keep contacts/history.
+- **Database:** `Vetrix_db.json` is a simple persistent store. Do not delete it if you want to keep contacts/history.
 - **Testing:** Always refer to `TEST_MANIFEST.md` for verified demo flows.

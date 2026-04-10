@@ -1,6 +1,6 @@
 # 🏛️ Research-Grade Autonomous Web3 Prototype V2.2 — Architecture Design
 
-This document details the architecture of the Aura Autonomous Agent (Research-Grade Prototype). The system is a proof-of-concept designed to transition Web3 interaction from **technical commands** to **human-native conversation**.
+This document details the architecture of the Vetrix Autonomous Agent (Research-Grade Prototype). The system is a proof-of-concept designed to transition Web3 interaction from **technical commands** to **human-native conversation**.
 
 ## 1. System Overview
 
@@ -11,7 +11,7 @@ graph TD
     User((User)) -->|Prompt| ChatUI[Frontend: ChatInterface]
     ChatUI -->|REST API| Controller[Backend: intentController]
     
-    subgraph "Aura Intelligence Stack"
+    subgraph "Vetrix Intelligence Stack"
         Controller -->|LLM| Gemini[Gemini 2.0 Flash]
         Gemini -->|JSON Intent| Zod[Zod Validation]
         Zod -->|Context| Context[Context Intelligence Layer]
@@ -59,9 +59,9 @@ The UI now reflects the AI's compute lifecycle:
 ### 🔐 Multi-Factor Safety Guard
 
 ## 3. Persistent Storage (Edge-Persistence)
-Aura uses a lightweight JSON-based persistent store (`aura_db.json`) for demo portability. 
+Vetrix uses a lightweight JSON-based persistent store (`Vetrix_db.json`) for demo portability. 
 - **Schema-ready:** Designed for full Prisma/PostgreSQL migration.
 - **Encrypted Local Storage:** Ensures user data stays within the local environment.
 
 ## 4. Verifiable Execution Model
-Aura maintains an off-chain **Audit Log** that maps every `txHash` to the user's original natural language prompt. This ensures transparency and verifiability of the AI's autonomous decisions.
+Vetrix maintains an off-chain **Audit Log** that maps every `txHash` to the user's original natural language prompt. This ensures transparency and verifiability of the AI's autonomous decisions.

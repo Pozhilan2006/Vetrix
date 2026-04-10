@@ -1,6 +1,6 @@
-# 📊 Aura V2 — Codebase & Architecture Report
+# 📊 Vetrix V2 — Codebase & Architecture Report
 
-This document outlines the current state of the Aura V2 codebase, the verified working features, and the internal data flow of the architecture.
+This document outlines the current state of the Vetrix V2 codebase, the verified working features, and the internal data flow of the architecture.
 
 ## 1. Codebase Structure
 
