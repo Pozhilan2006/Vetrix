@@ -136,7 +136,6 @@ This research and project have been officially published on **Zenodo**. If you u
 
 - **Zenodo DOI:** [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.placeholder.svg)](https://doi.org/10.5281/zenodo.placeholder)
 - **Paper Title:** *Vetrix: An Autonomous Web3 Agent for Natural Language Transaction Execution*
-- **Repository:** [arun6184/aura-web3-bot-V2](https://github.com/arun6184/aura-web3-bot-V2)
 
 ---
 
