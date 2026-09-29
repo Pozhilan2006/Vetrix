@@ -11,7 +11,7 @@ router.post('/chat', handleChat);
 
 // POST /api/chat/clear — clear session after tx confirmed
 router.post('/chat/clear', (req, res) => {
-  const { session_id } = req.body;
+  const { session_id } = req.body || {};
   if (session_id) {
     clearSession(session_id);
     return res.json({ cleared: true, message: 'Session cleared successfully.' });
