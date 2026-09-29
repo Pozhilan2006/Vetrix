@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useWallet } from '../context/WalletContext';
+import { DEFAULT_CURRENCY } from '../config/appConfig';
 
 interface BalanceCardProps {
   balances: Array<{ asset: string; amount: string; isNative: boolean }>;
@@ -69,7 +70,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({ balances, loading }) => {
               color: 'var(--text-secondary)',
               margin: 0,
             }}>
-              ≈ ${totalUsdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+              ≈ ${totalUsdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {DEFAULT_CURRENCY}
             </p>
           </div>
         )}

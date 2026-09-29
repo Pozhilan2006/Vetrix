@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '../context/WalletContext';
 import { ethers } from 'ethers';
+import { generateShortTransactionId, isValidEthereumAddress } from '../utils/projectUtils';
 
 interface ActionModalProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, initialTab =
 
     try {
       // Basic validation
-      if (!ethers.isAddress(recipient)) {
+      if (!isValidEthereumAddress(recipient)) {
         throw new Error('Invalid recipient address');
       }
 
@@ -161,7 +162,7 @@ const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, initialTab =
               </div>
 
               {localError && <p style={{ color: 'var(--accent-red)', fontSize: '12px', textAlign: 'center' }}>{localError}</p>}
-              {txHash && <p style={{ color: 'var(--accent-green)', fontSize: '11px', textAlign: 'center' }}>Success! Hash: {txHash.slice(0,10)}...</p>}
+              {txHash && <p style={{ color: 'var(--accent-green)', fontSize: '11px', textAlign: 'center' }}>Success! Hash: {generateShortTransactionId(txHash, 10, 0)}</p>}
 
               <button
                 disabled={isLoading || !amount || !recipient}

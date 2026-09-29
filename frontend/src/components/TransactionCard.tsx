@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useWallet, TxStage, TxProgress } from '../context/WalletContext';
+import { formatTransactionStatus } from '../utils/projectUtils';
+import { SUPPORTED_NETWORK_NAME } from '../config/appConfig';
 
 interface IntentData {
   action: string;
@@ -28,10 +30,10 @@ const short = (addr: string | null) =>
 
 // ── Stage config ──────────────────────────────────────────────────────────
 const STAGES: { key: TxStage; label: string; desc: string }[] = [
-  { key: 'signing',     label: 'Awaiting Signature', desc: 'Confirm in MetaMask'         },
-  { key: 'broadcasting',label: 'Broadcasting',        desc: 'Sending to the network'      },
-  { key: 'confirming',  label: 'Confirming',          desc: 'Waiting for a block'         },
-  { key: 'confirmed',   label: 'Confirmed',           desc: 'Transaction on-chain'        },
+  { key: 'signing',     label: formatTransactionStatus('signing'), desc: 'Confirm in MetaMask'         },
+  { key: 'broadcasting',label: formatTransactionStatus('broadcasting'), desc: 'Sending to the network'      },
+  { key: 'confirming',  label: formatTransactionStatus('confirming'), desc: 'Waiting for a block'         },
+  { key: 'confirmed',   label: formatTransactionStatus('confirmed'), desc: 'Transaction on-chain'        },
 ];
 
 const STAGE_ORDER: TxStage[] = ['signing', 'broadcasting', 'confirming', 'confirmed'];
@@ -65,7 +67,7 @@ export default function TransactionCard({ intent, onConfirmed }: TransactionCard
       if (p.blockNumber) setLatestBlock(p.blockNumber);
       if (p.stage === 'confirmed' && onConfirmed && p.hash) {
         const summary =
-          `✅ Done. Sent ${intent.amount} ${intent.asset?.toUpperCase()} to ${short(intent.to_address)} on ${intent.chain || 'Sepolia'}.\n` +
+          `✅ Done. Sent ${intent.amount} ${intent.asset?.toUpperCase()} to ${short(intent.to_address)} on ${intent.chain || SUPPORTED_NETWORK_NAME}.\n` +
           `Block #${p.blockNumber} · [View on Etherscan](https://sepolia.etherscan.io/tx/${p.hash})`;
         onConfirmed(summary, p.hash);
       }

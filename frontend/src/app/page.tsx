@@ -117,7 +117,7 @@ export default function LandingPage() {
               fontSize: 'min(64px, 8vw)', fontWeight: 900, color: 'var(--text-primary)',
               letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0
             }}>
-              THE AUTONOMOUS
+              THE SMART AI AGENT
             </h1>
             <h1 style={{
               fontSize: 'min(64px, 8vw)', fontWeight: 900,
@@ -151,7 +151,7 @@ export default function LandingPage() {
             }}>
               {isConnecting ? 'Linking...' : 'Launch Command Center'}
             </button>
-            <button className="fintech-card-hover" style={{
+            <button onClick={() => alert('Protocol documentation coming soon.')} className="fintech-card-hover" style={{
               backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)',
               border: '1px solid var(--border-neutral)', padding: '16px 32px', borderRadius: '12px',
               fontSize: '14px', fontWeight: 700, cursor: 'pointer'

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
+import { formatTransactionAmount } from '../utils/projectUtils';
 
 const TransactionHistory: React.FC = () => {
   const { history, loading } = useWallet();
@@ -76,7 +77,7 @@ const TransactionHistory: React.FC = () => {
                   fontWeight: 700, 
                   color: tx.category === 'external' ? 'var(--accent-red)' : 'var(--accent-green)' 
                 }}>
-                  {tx.category === 'external' ? '-' : '+'}{parseFloat(tx.value).toFixed(4)} {tx.asset}
+                  {tx.category === 'external' ? '-' : '+'}{formatTransactionAmount(tx.value)} {tx.asset}
                 </div>
                 <div style={{ fontSize: '8px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, marginTop: '2px' }}>
                   {new Date(tx.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })} • {new Date(tx.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
