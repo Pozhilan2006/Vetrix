@@ -58,7 +58,7 @@ In **V2 (Vetrix Agent)**, the architecture shifts execution logic to the backend
 
 ### Backend (Agent Brain & Context)
 - **Server:** Node.js, Express.js
-- **Intelligence:** `@google/generative-ai` (Gemini SDK)
+- - **Intelligence:** Gemini API (HTTP requests via Axios)
 - **Data Layer:** Lightweight Edge-Persistence (JSON-based audit & contact store)
 - **Pricing:** **CoinGecko API** for real-time USD conversion
 - **Web3 Engine:** `ethers.js` (V6) for server-side signing and broadcast
