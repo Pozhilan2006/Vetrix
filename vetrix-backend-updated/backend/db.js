@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '../../aura_db.json');
+const DB_PATH = path.join(__dirname, 'aura_db.json');
 
 /**
  * Initializes the local database if it doesn't exist.
@@ -89,7 +89,7 @@ const getLastSuccessfulTransaction = (userWallet) => {
   const wallet = userWallet.toLowerCase();
   
   return db.transactions.find(tx => 
-    tx.userWallet.toLowerCase() === wallet && 
+    tx.userWallet && tx.userWallet.toLowerCase() === wallet && 
     (tx.status === 'success' || tx.status === 'pending')
   ) || null;
 };

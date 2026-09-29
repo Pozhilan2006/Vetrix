@@ -1,7 +1,7 @@
 // backend/src/services/context/contactService.js — V2.3 CONTEXT LAYER
 // Resolves human-native names to blockchain addresses via persistent edge-store
 
-const { addContact, getContact } = require('../../utils/db');
+const { addContact, getContact } = require('./db');
 const { ethers } = require('ethers');
 
 /**

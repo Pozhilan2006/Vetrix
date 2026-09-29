@@ -2,18 +2,18 @@
 // Core of the Vetrix Autonomous Agent. Handles intent routing, context resolution,
 // trust-layer confirmations, and autonomous execution.
 
-const { parseUserIntent } = require('../services/llmService');
-const { getSession, updateSession, clearSession } = require('../utils/sessionStore');
-const { getBalances } = require('../services/portfolioService');
-const { estimateGas } = require('../services/gasService');
-const { isValidAddress, isValidAmount } = require('../services/web3Service');
-const { getChainConfig } = require('../services/chainService');
-const { executeTransaction } = require('../services/walletService');
-const { resolveContact, saveNewContact } = require('../services/context/contactService');
-const { resolveSmartAmount, getTokenPrice } = require('../services/context/amountParser');
-const { resolveTransactionMemory } = require('../services/context/memoryService');
-const { logTransaction } = require('../utils/db');
-const { evaluateSafety } = require('../services/decisionEngine');
+const { parseUserIntent } = require('./llmService');
+const { getSession, updateSession, clearSession } = require('./sessionStore');
+const { getBalances } = require('./portfolioService');
+const { estimateGas } = require('./gasService');
+const { isValidAddress, isValidAmount } = require('./web3Service');
+const { getChainConfig } = require('./chainService');
+const { executeTransaction } = require('./walletService');
+const { resolveContact, saveNewContact } = require('./contactService');
+const { resolveSmartAmount, getTokenPrice } = require('./amountParser');
+const { resolveTransactionMemory } = require('./memoryService');
+const { logTransaction } = require('./db');
+const { evaluateSafety } = require('./decisionEngine');
 
 /**
  * Main chat handler — processes user message, resolves context, and routes to action.
@@ -74,7 +74,7 @@ const handleChat = async (req, res) => {
     }
   } catch (error) {
     console.error('Intent controller error:', error.message);
-    return res.json({ next_step: 'error', message: 'An internal error occurred. Please try again.' });
+    return res.status(500).json({ next_step: 'error', message: 'An internal error occurred. Please try again.' });
   }
 };
 

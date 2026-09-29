@@ -2,7 +2,7 @@
 // Resolves repetitive intent requests like "Repeat last transaction"
 // Uses the persistent audit log (getLastSuccessfulTransaction)
 
-const { getLastSuccessfulTransaction } = require('../../utils/db');
+const { getLastSuccessfulTransaction } = require('./db');
 
 /**
  * Resolves a 'repeat' intent by pulling the last successful transaction from the audit log.

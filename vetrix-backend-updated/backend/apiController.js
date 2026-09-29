@@ -1,5 +1,6 @@
 const axios = require('axios');
-const { getBalances } = require('../services/portfolioService');
+const { getBalances } = require('./portfolioService');
+const { isValidAddress } = require('./web3Service');
 
 // In-Memory cache for CoinGecko to prevent Rate Limiting under heavy polling
 let marketCache = {
@@ -14,7 +15,7 @@ const getBalance = async (req, res) => {
   const { address } = req.params;
   const chain = req.query.chain || 'sepolia';
 
-  if (!address) return res.status(400).json({ error: 'Address is required' });
+  if (!address || !isValidAddress(address)) return res.status(400).json({ error: 'A valid wallet address is required' });
 
   try {
     const portfolio = await getBalances(address, chain);
@@ -59,12 +60,12 @@ const getMarketPrices = async (req, res) => {
   }
 };
 
-const { getAllContacts } = require('../utils/db');
+const { getAllContacts } = require('./db');
 
 // 3. Get Wallet History (Alchemy Native JSON-RPC)
 const getHistory = async (req, res) => {
   const { address } = req.params;
-  if (!address) return res.status(400).json({ error: 'Address is required' });
+  if (!address || !isValidAddress(address)) return res.status(400).json({ error: 'A valid wallet address is required' });
 
   // Use the verified active Alchemy Key
   const alchemyUrl = process.env.ALCHEMY_RPC_URL;

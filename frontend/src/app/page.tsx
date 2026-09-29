@@ -108,7 +108,7 @@ export default function LandingPage() {
             marginBottom: '40px'
           }}>
             <div style={{ width: '6px', height: '6px', backgroundColor: 'var(--accent-green)', borderRadius: '50%', boxShadow: '0 0 8px var(--accent-green)' }} />
-            SYSTEM V4.0 ACTIVE
+            SYSTEM V4.0 • ACTIVE
           </div>
 
           {/* Hero Typography */}

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const apiController = require('../controllers/apiController');
+const apiController = require('./apiController');
 
 // Route: /api/wallet/balance/:address
 router.get('/wallet/balance/:address', apiController.getBalance);

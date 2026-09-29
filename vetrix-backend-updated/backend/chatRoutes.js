@@ -1,9 +1,10 @@
 // backend/src/routes/chatRoutes.js — unchanged from V1
 const express = require('express');
 const router = express.Router();
-const { handleChat } = require('../controllers/intentController');
-const { clearSession } = require('../utils/sessionStore');
-const { getBalances } = require('../services/portfolioService');
+const { handleChat } = require('./intentController');
+const { clearSession } = require('./sessionStore');
+const { getBalances } = require('./portfolioService');
+const { isValidAddress } = require('./web3Service');
 
 // POST /api/chat — main chat endpoint
 router.post('/chat', handleChat);
@@ -23,8 +24,8 @@ router.get('/portfolio/:address', async (req, res) => {
   const { address } = req.params;
   const chain = req.query.chain || 'sepolia';
 
-  if (!address) {
-    return res.status(400).json({ error: 'Wallet address is required.' });
+  if (!address || !isValidAddress(address)) {
+    return res.status(400).json({ error: 'A valid wallet address is required.' });
   }
 
   try {

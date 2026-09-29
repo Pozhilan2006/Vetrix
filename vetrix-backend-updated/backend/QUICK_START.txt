@@ -1,0 +1,16 @@
+VETRIX BACKEND - QUICK START
+
+1. Install Node.js 18+ (Node.js 20 LTS recommended).
+2. Open Command Prompt in this folder.
+3. Run: npm install
+4. Copy .env.example to .env
+5. Add GEMINI_API_KEY if you want AI chat.
+6. Add ALCHEMY_RPC_URL if you want transaction history.
+7. Leave BOT_PRIVATE_KEY empty unless you intentionally use a dedicated Sepolia test wallet.
+8. Run: npm start
+9. Open: http://localhost:3001/health
+
+For a React/Vite frontend, the default CORS configuration already allows:
+http://localhost:5173
+
+Never upload .env or a private key to GitHub.

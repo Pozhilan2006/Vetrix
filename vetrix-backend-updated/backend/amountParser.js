@@ -4,7 +4,7 @@
 
 const axios = require('axios');
 const { ethers } = require('ethers');
-const { getChainConfig } = require('../chainService');
+const { getChainConfig } = require('./chainService');
 
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/simple/price';
 

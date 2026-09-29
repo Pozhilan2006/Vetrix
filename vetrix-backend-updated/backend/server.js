@@ -2,18 +2,20 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const chatRoutes = require('./src/routes/chatRoutes');
+const chatRoutes = require('./chatRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = Number(process.env.PORT) || 3001;
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000,http://localhost:3001')
+  .split(',').map(origin => origin.trim()).filter(Boolean);
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: allowedOrigins,
   methods: ['GET', 'POST'],
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 // Request logging
 app.use((req, res, next) => {
@@ -27,22 +29,26 @@ app.get('/health', (req, res) => {
     status: 'ok',
     service: 'vetrix-v3-autonomous-agent',
     version: '2.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    aiConfigured: Boolean(process.env.GEMINI_API_KEY),
+    rpcConfigured: Boolean(process.env.ALCHEMY_RPC_URL),
     timestamp: new Date().toISOString(),
   });
 });
 
 // API Routes
 app.use('/api', chatRoutes);
-app.use('/api', require('./src/routes/apiRoutes'));
+app.use('/api', require('./apiRoutes'));
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  res.status(404).json({ error: 'Route not found', path: req.originalUrl, method: req.method });
 });
 
 // Error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.message);
+  if (res.headersSent) return next(err);
   res.status(500).json({ error: 'Internal server error' });
 });
 

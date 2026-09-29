@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "check": "node --check server.js",
+    "test": "node --check server.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",

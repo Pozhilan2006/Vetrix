@@ -1,7 +1,7 @@
 // backend/src/services/llmService.js — V3.1 VIVA STABLE
 const axios = require('axios');
 const { z } = require('zod');
-const SYSTEM_PROMPT = require('../utils/systemPrompt');
+const SYSTEM_PROMPT = require('./systemPrompt');
 require('dotenv').config();
 
 const apiKey = (process.env.GEMINI_API_KEY || '').trim();
