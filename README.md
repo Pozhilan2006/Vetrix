@@ -140,3 +140,4 @@ This research and project have been officially published on **Zenodo**. If you u
 ---
 
 <p align="center">Made with ❤️ for the Web3 Ecosystem</p>
+## Updated by contributor
